@@ -50,6 +50,8 @@ To spin up the project locally, make sure you have [Bun](https://bun.sh/) (or No
 
 4. Open http://localhost:5173 in your favorite browser.
 
+
+
 ## Russian / Русский
 
 ---
@@ -90,20 +92,19 @@ To spin up the project locally, make sure you have [Bun](https://bun.sh/) (or No
 ### Локальное развертывание
 
 1. Клонируйте репозиторий:
-   ```bash
+```bash
    git clone [https://github.com/gaitarov095/takecode.git](https://github.com/gaitarov095/takecode.git)
    cd takecode
-   ```
+```
 
-2. Установите зависимости:
-   ```bash
-   bun install
-   ```
+3. Установите зависимости:
+```bash
+   bun run dev
+```
 
-3. Запустите сервер для разработки:
-   ```bash
+4. Запустите сервер для разработки:
+```bash
    bun run dev
-   ```
+```
 
-4. Откройте http://localhost:5173 в браузере.
- сделай это еще на англ
+5. Откройте http://localhost:5173 в браузере.
