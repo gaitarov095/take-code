@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+:root {
+    --title-color: #FFFFFF;
+    --text-color: #94a3b8;
+    --tag-color: #cbd5e1;
+
+    --input-bg-color: #090f22;
+    --input-border-color: #22293d;
+    --input-color: #64748b;
+
+    --button-bg-color: #21293b;
+    --button-border-color: #3f4657;
+
+    --button-linear: linear-gradient(135deg, rgb(56, 189, 248) 0%, rgb(52, 211, 153) 100%); 
+
+    --icons-blue-color: #38BDF8;
+    --icons-blue-bg: #38bff841;
+    --icons-blue-border: #38bff85a;
+
+    --line-color: #222b3e;
+}
+
+::selection {
+    background: #34d3992e;
+    color: #A7F3D0;
+}
+
+body {
+    background-color: #0f172a;
+    font-family: 'Inter', sans-serif;
+}
+
+@font-face {
+    font-family: 'JetBrainsMonoNerd';
+    src: url('../fonts/JetBrainsMonoNLNerdFontPropo-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@theme {
+    --font-jetbrains: 'JetBrainsMonoNerd', monospace;
+}

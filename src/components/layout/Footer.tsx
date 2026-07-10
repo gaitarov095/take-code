@@ -1,0 +1,77 @@
+import { Braces } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faInstagram, faTelegram, faGithub } from '@fortawesome/free-brands-svg-icons';
+import { Link } from 'react-router-dom';
+
+export const Footer = () => {
+	return (
+		<footer className='w-full border-t border-[#222b3e] bg-[#020617]/40 backdrop-blur-md mt-20 px-4 sm:px-8 lg:px-16 py-8 md:py-12 flex flex-col items-center justify-center'>
+			<div className='w-full max-w-7xl flex flex-col md:flex-row md:items-center md:justify-between gap-8 md:gap-4'>
+				{/* ЛОГОТИП: на десктопе слева, на мобилке по центру */}
+				<Link to={'/'}>
+					<div className='flex items-center gap-3 justify-center md:justify-start select-none'>
+						<div className='flex items-center justify-center w-10 h-10 rounded-xl bg-linear-to-br from-[#38BDF8] to-[#34D399] shadow-[0px_0px_20px_0px_rgba(56,189,248,0.25)] max-lg:w-9 max-lg:h-9'>
+							<Braces className='text-[#03111F] scale-95 max-lg:scale-90' />
+						</div>
+						<h3 className='text-xl text-[#cbd5e1] max-lg:text-lg font-bold tracking-wide'>
+							TakeCode
+						</h3>
+					</div>
+				</Link>
+
+				{/* НАВИГАЦИЯ: аккуратные отступы, центрирование на мобилках */}
+				<ul className='flex items-center gap-6 sm:gap-8 justify-center text-lg font-medium text-[#94A3B8] max-sm:text-[16px]'>
+					<Link to='/exploreHub'>
+						<li>
+							<span className='cursor-pointer transition-colors duration-200 hover:text-white select-none'>
+								Explore
+							</span>
+						</li>
+					</Link>
+					<Link to='/community'>
+						<li>
+							<span className='cursor-pointer transition-colors duration-200 hover:text-white select-none'>
+								Community
+							</span>
+						</li>
+					</Link>
+					<Link to='/guideLines'>
+						<li>
+							<span className='cursor-pointer transition-colors duration-200 hover:text-white select-none'>
+								Guidelines
+							</span>
+						</li>
+					</Link>
+				</ul>
+
+				{/* СОЦСЕТИ: на десктопе справа, на мобилке снизу по центру */}
+				<ul className='flex items-center gap-2 justify-center'>
+					<li>
+						<a href='https://github.com' target='_blank' rel='noreferrer'>
+							<FontAwesomeIcon
+								icon={faGithub}
+								className='text-[#94A3B8] text-2xl transition-colors duration-200 hover:text-white cursor-pointer'
+							/>
+						</a>
+					</li>
+					<li>
+						<a href='https://t.me' target='_blank' rel='noreferrer'>
+							<FontAwesomeIcon
+								icon={faTelegram}
+								className='text-[#94A3B8] text-2xl transition-colors duration-200 hover:text-[#38BDF8] cursor-pointer'
+							/>
+						</a>
+					</li>
+					<li>
+						<a href='https://instagram.com' target='_blank' rel='noreferrer'>
+							<FontAwesomeIcon
+								icon={faInstagram}
+								className='text-[#94A3B8] text-2xl transition-colors duration-200 hover:text-[#fd1d1d] cursor-pointer'
+							/>
+						</a>
+					</li>
+				</ul>
+			</div>
+		</footer>
+	);
+};
