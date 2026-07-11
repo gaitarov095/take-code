@@ -57,6 +57,40 @@ export const Auth = () => {
 		}
 	};
 
+	const authWithGitHub = async () => {
+		setIsLoading(true)
+		try {
+			await supabase.auth.signInWithOAuth({
+				provider: 'github',
+				options: {
+					redirectTo:
+						'https://uhzqqqcvugfwcolpgagv.supabase.co/auth/v1/callback',
+				},
+			});
+		} catch (error) {
+			console.log(error)
+		} finally {
+			setIsLoading(false)
+		}
+	}
+
+	const authWithGoogle = async () => {
+		setIsLoading(true);
+		try {
+			await supabase.auth.signInWithOAuth({
+				provider: 'google',
+				options: {
+					redirectTo:
+						'https://uhzqqqcvugfwcolpgagv.supabase.co/auth/v1/callback',
+				},
+			});
+		} catch (error) {
+			console.log(error);
+		} finally {
+			setIsLoading(false);
+		}
+	}
+
 	return (
 		<div className='w-full h-dvh flex items-center justify-center gap-15'>
 			<div>
@@ -109,14 +143,30 @@ export const Auth = () => {
 				</div>
 				<div className='flex flex-col gap-5 w-full px-5'>
 					<div className='flex gap-5'>
-						<div className='flex items-center justify-center gap-2 text-[18px] text-white font-semibold bg-[#0b1220] border border-[#222b3e] w-full py-3 rounded-2xl cursor-pointer'>
-							<Github variant='dark' className='w-5 h-5' />
-							GitHub
-						</div>
-						<div className='flex items-center justify-center gap-2 text-[18px] text-white font-semibold bg-[#0b1220] border border-[#222b3e] w-full py-3 rounded-2xl cursor-pointer'>
-							<Google className='w-5 h-5' />
-							Google
-						</div>
+						<button
+							onClick={() => authWithGitHub()}
+							disabled={isLoading}
+							className='flex items-center justify-center gap-2 text-[18px] text-white font-semibold bg-[#0b1220] border border-[#222b3e] w-full py-3 rounded-2xl cursor-pointer'
+						>
+							{isLoading ? (
+								<AuthLoader />
+							) : (
+								<>
+									<Github variant='dark' className='w-5 h-5' />
+									<span>GitHub</span>
+								</>
+							)}
+						</button>
+						<button
+							onClick={() => authWithGoogle()}
+							disabled={isLoading}
+							className='flex items-center justify-center gap-2 text-[18px] text-white font-semibold bg-[#0b1220] border border-[#222b3e] w-full py-3 rounded-2xl cursor-pointer'
+						>
+							<>
+								<Google className='w-5 h-5' />
+								Google
+							</>
+						</button>
 					</div>
 					<div className='flex items-center'>
 						<div className='grow border-t border-slate-700/50'></div>

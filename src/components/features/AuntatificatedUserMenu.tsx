@@ -21,7 +21,7 @@ export const AuntatificatedUserMenu = ({ user_metadata }: User) => {
 				onClick={() => setActive(prev => !prev)}
 			>
 				<span className='text-white font-bold'>
-					{user_metadata.display_name}
+					{user_metadata.user_name || user_metadata.display_name || user_metadata.name}
 				</span>
 				<div>
 					{user_metadata.avatar_url === undefined ? (
