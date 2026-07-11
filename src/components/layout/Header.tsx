@@ -1,16 +1,44 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 
-import { Link } from 'react-router-dom';
+import { Braces, Search } from 'lucide-react';
 
+import type { User } from '@supabase/supabase-js';
+import { supabase } from '../../utils/supabase';
+
+import { cn } from '../../utils/cn';
 import { Input } from '../ui/Input';
 
-import { Braces, Search} from 'lucide-react';
+import { AuntatificatedUserMenu } from '../features/AuntatificatedUserMenu';
 
 export const Header = () => {
-	const [open, setOpened] = useState<boolean>(false)
+	const location = useLocation();
+	const [user, setUser] = useState<User | null>(null);
+	const [open, setOpened] = useState<boolean>(false);
+	const [loading, setLoading] = useState<boolean>(true);
+
+	useEffect(() => {
+		supabase.auth.getSession().then(({ data: { session } }) => {
+			setUser(session?.user || null);
+			setLoading(false);
+		});
+
+		const {
+			data: { subscription },
+		} = supabase.auth.onAuthStateChange((_event, session) => {
+			setUser(session?.user ?? null);
+		});
+
+		return () => subscription.unsubscribe();
+	}, []);
 
 	return (
-		<header className='py-6 px-10 flex items-center justify-between border-b border-[#222b3e] max-lg:px-4'>
+		<header
+			className={cn(
+				'py-6 px-10 flex items-center justify-between border-b border-[#222b3e] max-lg:px-4',
+				location.pathname === '/auth' && 'hidden',
+			)}
+		>
 			<Link to={'/'}>
 				<div className='flex items-center gap-3'>
 					<div className='flex items-center justify-center w-11 h-11 rounded-xl bg-linear-to-br from-[#38BDF8] to-[#34D399] shadow-[0px_0px_15px_0px_#38BDF8] max-lg:w-9 max-lg:h-9'>
@@ -53,14 +81,19 @@ export const Header = () => {
 						</li>
 					</Link>
 				</ul>
-				<div className='flex gap-4.5'>
-					<button className='w-18 h-11 rounded-3xl border border-[#f8fafc38] bg-[#f8fafc20] text-white font-semibold cursor-pointer transition-colors duration-300 ease-in-out hover:bg-[#131825] hover:border-[#282e3c] hover:text-[#aeb5c0]'>
-						Login
-					</button>
-					<button className='w-22 h-11 rounded-3xl bg-linear-to-br from-[#38BDF8] to-[#34D399] shadow-[0px_0px_10px_0px_#38BDF8] text-white font-semibold cursor-pointer max-lg:hidden'>
-						Sign Up
-					</button>
-				</div>
+				{loading ? (
+					<div className='w-18 h-11 rounded-3xl bg-[#f8fafc20] animate-pulse'></div>
+				) : user ? (
+					<AuntatificatedUserMenu user_metadata={user.user_metadata} />
+				) : (
+					<div className='flex gap-4.5'>
+						<Link to={'/auth'}>
+							<button className='w-18 h-11 rounded-3xl border border-[#f8fafc38] bg-[#f8fafc20] text-white font-semibold cursor-pointer transition-colors duration-300 ease-in-out hover:bg-[#131825] hover:border-[#282e3c] hover:text-[#aeb5c0]'>
+								Login
+							</button>
+						</Link>
+					</div>
+				)}
 			</div>
 
 			<div className='hidden max-[535px]:flex items-center justify-center gap-3'>

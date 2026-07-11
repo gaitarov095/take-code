@@ -1,0 +1,62 @@
+import { useState } from "react";
+
+import type { UserMetadata } from "@supabase/supabase-js";
+import { supabase } from "../../utils/supabase";
+
+import { cn } from "../../utils/cn";
+
+interface User {
+    user_metadata: UserMetadata;
+}
+
+export const AuntatificatedUserMenu = ({ user_metadata }: User) => {
+    const [active, setActive] = useState<boolean>(false)
+
+    const signOut = () => supabase.auth.signOut()
+
+	return (
+		<div className='relative'>
+			<div
+				className='flex items-center gap-2 cursor-pointer'
+				onClick={() => setActive(prev => !prev)}
+			>
+				<span className='text-white font-bold'>
+					{user_metadata.display_name}
+				</span>
+				<div>
+					{user_metadata.avatar_url === undefined ? (
+						<img
+							className='w-9 h-9 rounded-3xl'
+							src='https://img.magnific.com/premium-vector/default-avatar-profile-icon-social-media-user-image-gray-avatar-icon-blank-profile-silhouette-vector-illustration_561158-3407.jpg?semt=ais_hybrid&w=740&q=80'
+							alt=''
+						/>
+					) : (
+						<img
+							className='w-9 h-9 rounded-3xl'
+							src={user_metadata.avatar_url}
+							alt=''
+						/>
+					)}
+				</div>
+			</div>
+			<div
+				className={cn(
+					'bg-[#090f22] border border-[#22293d] rounded-2xl absolute mt-2 w-full h-auto transition-all ease-in-out duration-300',
+					active ? 'opacity-100 visible' : 'opacity-0 invisible',
+				)}
+			>
+				<ul>
+					<li className='text-[#94A3B8] px-4 p-3 cursor-pointer transition-colors hover:text-white'>
+						Profile
+					</li>
+					<li
+						onClick={signOut}
+						className='text-[#94A3B8] px-4 p-3 cursor-pointer transition-colors hover:text-white'
+					>
+						Exit
+					</li>
+				</ul>
+			</div>
+		</div>
+	);
+};

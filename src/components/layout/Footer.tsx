@@ -1,11 +1,21 @@
+import { Link, useLocation } from 'react-router-dom';
+import { cn } from '../../utils/cn';
+
 import { Braces } from 'lucide-react';
+
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInstagram, faTelegram, faGithub } from '@fortawesome/free-brands-svg-icons';
-import { Link } from 'react-router-dom';
 
 export const Footer = () => {
+	const location = useLocation();
+
 	return (
-		<footer className='w-full border-t border-[#222b3e] bg-[#020617]/40 backdrop-blur-md mt-20 px-4 sm:px-8 lg:px-16 py-8 md:py-12 flex flex-col items-center justify-center'>
+		<footer
+			className={cn(
+				'w-full border-t border-[#222b3e] bg-[#020617]/40 backdrop-blur-md mt-20 px-4 sm:px-8 lg:px-16 py-8 md:py-12 flex flex-col items-center justify-center',
+				location.pathname === '/auth' && 'hidden'
+			)}
+		>
 			<div className='w-full max-w-7xl flex flex-col md:flex-row md:items-center md:justify-between gap-8 md:gap-4'>
 				{/* ЛОГОТИП: на десктопе слева, на мобилке по центру */}
 				<Link to={'/'}>
