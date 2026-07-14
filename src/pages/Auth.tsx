@@ -146,7 +146,10 @@ export const Auth = () => {
 						<button
 							onClick={() => authWithGitHub()}
 							disabled={isLoading}
-							className='flex items-center justify-center gap-2 text-[18px] text-white font-semibold bg-[#0b1220] border border-[#222b3e] w-full py-3 rounded-2xl cursor-pointer'
+							className={cn(
+								'flex items-center justify-center gap-2 text-[18px] text-white font-semibold bg-[#0b1220] border border-[#222b3e] w-full py-3 rounded-2xl cursor-pointer',
+								isLoading && 'opacity-70 pointer-events-none',
+							)}
 						>
 							{isLoading ? (
 								<AuthLoader />
@@ -160,12 +163,19 @@ export const Auth = () => {
 						<button
 							onClick={() => authWithGoogle()}
 							disabled={isLoading}
-							className='flex items-center justify-center gap-2 text-[18px] text-white font-semibold bg-[#0b1220] border border-[#222b3e] w-full py-3 rounded-2xl cursor-pointer'
+							className={cn(
+								'flex items-center justify-center gap-2 text-[18px] text-white font-semibold bg-[#0b1220] border border-[#222b3e] w-full py-3 rounded-2xl cursor-pointer',
+								isLoading && 'opacity-70 pointer-events-none',
+							)}
 						>
-							<>
-								<Google className='w-5 h-5' />
-								Google
-							</>
+							{isLoading ? (
+								<AuthLoader />
+							) : (
+								<>
+									<Google variant='default' className='w-5 h-5' />
+									<span>Google</span>
+								</>
+							)}
 						</button>
 					</div>
 					<div className='flex items-center'>

@@ -1,27 +1,20 @@
-import { Routes, Route } from 'react-router-dom';
-
-import { Home } from './pages/Home';
-import { Auth } from './pages/Auth';
-
-import { Header } from './components/layout/Header';
-import { Footer } from './components/layout/Footer';
+import { Route, Routes } from "react-router-dom";
+import { MainLayout } from "./components/layout/MainLayout";
+import { Home } from "./pages/Home";
+import { Auth } from "./pages/Auth";
+import { Profile } from "./pages/Profile";
 
 export const App = () => {
 	return (
-		<div className='flex flex-col min-h-screen'>
-			<Header />
+		<Routes>
+			<Route path='/auth' element={<Auth />} />
 
-			{/* Страница занимает всё свободное пространство */}
-			<div className='grow'>
-				<Routes>
-					<Route path='/' element={<Home />} />
-					<Route path='/auth' element={<Auth />}></Route>
-					<Route path='/exploreHub' element={<Home />} />
-					<Route path='/community' element={<Home />} />
-				</Routes>
-			</div>
-
-			<Footer />
-		</div>
+			<Route element={<MainLayout />}>
+				<Route path='/' element={<Home />} />
+				<Route path='/profile' element={<Profile />} />
+				<Route path='/exploreHub' element={<Home />} />
+				<Route path='/community' element={<Home />} />
+			</Route>
+		</Routes>
 	);
 };

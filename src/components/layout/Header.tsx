@@ -1,18 +1,16 @@
 import { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 import { Braces, Search } from 'lucide-react';
 
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '../../utils/supabase';
 
-import { cn } from '../../utils/cn';
 import { Input } from '../ui/Input';
 
 import { AuntatificatedUserMenu } from '../features/AuntatificatedUserMenu';
 
 export const Header = () => {
-	const location = useLocation();
 	const [user, setUser] = useState<User | null>(null);
 	const [open, setOpened] = useState<boolean>(false);
 	const [loading, setLoading] = useState<boolean>(true);
@@ -34,10 +32,7 @@ export const Header = () => {
 
 	return (
 		<header
-			className={cn(
-				'py-6 px-10 flex items-center justify-between border-b border-[#222b3e] max-lg:px-4',
-				location.pathname === '/auth' && 'hidden',
-			)}
+			className='py-6 px-10 flex items-center justify-between border-b border-[#222b3e] max-lg:px-4'
 		>
 			<Link to={'/'}>
 				<div className='flex items-center gap-3'>
@@ -131,14 +126,19 @@ export const Header = () => {
 						</span>
 					</li>
 				</ul>
-				<div className='flex flex-col items-center gap-4.5 w-full'>
-					<button className='w-full h-11 rounded-3xl border border-[#f8fafc38] bg-[#f8fafc20] text-white font-semibold cursor-pointer'>
-						Login
-					</button>
-					<button className='w-full h-11 rounded-3xl bg-linear-to-br from-[#38BDF8] to-[#34D399] shadow-[0px_0px_10px_0px_#38BDF8] text-white font-semibold cursor-pointer'>
-						Sign Up
-					</button>
-				</div>
+				{user ? (
+					<AuntatificatedUserMenu user_metadata={user.user_metadata} />
+				) : (
+					<div className='flex flex-col items-center gap-4.5 w-full'>
+						<button className='w-full h-11 rounded-3xl border border-[#f8fafc38] bg-[#f8fafc20] text-white font-semibold cursor-pointer'>
+							Login
+						</button>
+						<button className='w-full h-11 rounded-3xl bg-linear-to-br from-[#38BDF8] to-[#34D399] shadow-[0px_0px_10px_0px_#38BDF8] text-white font-semibold cursor-pointer'>
+							Sign Up
+						</button>
+					</div>
+				)}
+				
 			</div>
 		</header>
 	);
