@@ -3,8 +3,10 @@ import React, { useEffect } from 'react'
 import { codeToHtml } from 'shiki'
 
 import { Sparkles } from 'lucide-react';
+
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
+import { CodeLoader } from '../ui/Loaders/CodeLoader';
 
 export const Hero = () => {
     const [code, setCode] = React.useState<string>('');
@@ -83,11 +85,13 @@ export const Hero = () => {
 					</div>
 					<Button onClick={copyCode} copiedStatus={copied} />
 				</div>
-				<div className='px-6 py-6 font-mono text-lg overflow-x-auto [&_pre]:bg-transparent!'>
+				<div className='w-full h-full px-6 py-6 font-mono text-lg overflow-x-auto [&_pre]:bg-transparent!'>
 					{code ? (
 						<div dangerouslySetInnerHTML={{ __html: code }} />
 					) : (
-						<pre className='text-slate-500'>{snippetCode}</pre>
+						<div className='w-full h-full flex items-center justify-center'>
+							<CodeLoader />
+						</div>
 					)}
 				</div>
 			</div>

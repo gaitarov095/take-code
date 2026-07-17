@@ -7,9 +7,7 @@ import { faInstagram, faTelegram, faGithub } from '@fortawesome/free-brands-svg-
 
 export const Footer = () => {
 	return (
-		<footer
-			className='w-full border-t border-[#222b3e] bg-[#020617]/40 backdrop-blur-md mt-20 px-4 sm:px-8 lg:px-16 py-8 md:py-12 flex flex-col items-center justify-center'
-		>
+		<footer className='w-full border-t border-[#222b3e] bg-[#020617]/40 backdrop-blur-md px-4 sm:px-8 lg:px-16 py-8 md:py-12 flex flex-col items-center justify-center'>
 			<div className='w-full max-w-7xl flex flex-col md:flex-row md:items-center md:justify-between gap-8 md:gap-4'>
 				{/* ЛОГОТИП: на десктопе слева, на мобилке по центру */}
 				<Link to={'/'}>
@@ -51,7 +49,11 @@ export const Footer = () => {
 				{/* СОЦСЕТИ: на десктопе справа, на мобилке снизу по центру */}
 				<ul className='flex items-center gap-2 justify-center'>
 					<li>
-						<a href='https://github.com' target='_blank' rel='noreferrer'>
+						<a
+							href='https://github.com/gaitarov095'
+							target='_blank'
+							rel='noreferrer'
+						>
 							<FontAwesomeIcon
 								icon={faGithub}
 								className='text-[#94A3B8] text-2xl transition-colors duration-200 hover:text-white cursor-pointer'
@@ -59,7 +61,7 @@ export const Footer = () => {
 						</a>
 					</li>
 					<li>
-						<a href='https://t.me' target='_blank' rel='noreferrer'>
+						<a href='https://t.me/gaitarov095' target='_blank' rel='noreferrer'>
 							<FontAwesomeIcon
 								icon={faTelegram}
 								className='text-[#94A3B8] text-2xl transition-colors duration-200 hover:text-[#38BDF8] cursor-pointer'
@@ -67,7 +69,11 @@ export const Footer = () => {
 						</a>
 					</li>
 					<li>
-						<a href='https://instagram.com' target='_blank' rel='noreferrer'>
+						<a
+							href='https://www.instagram.com/meldar.achlo/'
+							target='_blank'
+							rel='noreferrer'
+						>
 							<FontAwesomeIcon
 								icon={faInstagram}
 								className='text-[#94A3B8] text-2xl transition-colors duration-200 hover:text-[#fd1d1d] cursor-pointer'

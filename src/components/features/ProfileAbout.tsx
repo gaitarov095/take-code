@@ -1,27 +1,29 @@
-import { Github, Telegram, Instagram, X, AzureEntraGlobalSecureAccess } from '@thesvg/react';
-import type { UserProfile } from '../../pages/Profile';
+import { useRef } from 'react';
+import { useHover } from 'ahooks'
 
-const socialIconsMap: Record<
-    string,
-    React.ComponentType<{ className?: string }>
-> = {
-    GitHub: Github,
-    Telegram: Telegram, // В Lucide иконка бумажного самолетика — это Send
-    Instagram: Instagram, // В Lucide иконка бумажного самолетика — это Send
-    XTwitter: X,
-    Website: AzureEntraGlobalSecureAccess, // На случай, если будет личный сайт
-};
+import { Settings2 } from 'lucide-react'
+import { AzureEntraGlobalSecureAccess } from '@thesvg/react';
 
-interface ProfileLeftSideProps {
-    userProfile: UserProfile | null;
+import { cn } from '../../utils/cn';
+import { socialIconsMap } from '../../mocks/mockData';
+
+import type { SocialMedia, UserProfile } from '../../pages/Profile';
+
+
+interface ProfileAboutProps {
+	userProfile: UserProfile | null;
+	onOpenSettings: () => void;
 }
 
-export const ProfileAbout = ({ userProfile }: ProfileLeftSideProps) => {
+export const ProfileAbout = ({ userProfile, onOpenSettings }: ProfileAboutProps) => {
+	const profileRef = useRef(null);
+	const isHovering = useHover(profileRef);
+
 	return (
-		<>
+		<div ref={profileRef} className='flex flex-col gap-5'>
 			<div className='flex gap-4'>
 				<div className='w-25 h-25'>
-					{userProfile?.avatar_url === null ? (
+					{userProfile?.avatar_url === undefined ? (
 						<img
 							className='rounded-3xl'
 							src='https://img.magnific.com/premium-vector/default-avatar-profile-icon-social-media-user-image-gray-avatar-icon-blank-profile-silhouette-vector-illustration_561158-3407.jpg?semt=ais_hybrid&w=740&q=80'
@@ -35,39 +37,63 @@ export const ProfileAbout = ({ userProfile }: ProfileLeftSideProps) => {
 						/>
 					)}
 				</div>
-				<div className='mt-2'>
-					<h2 className='font-extrabold text-4xl text-white'>
-						{userProfile?.username || userProfile?.dispay_name}
-					</h2>
-					<div className='text-[#94a3b8] flex items-center gap-2 mt-1'>
-						<span>@{userProfile?.tag || userProfile?.username}</span>
-						<span className='text-[#94a3b8]'>•</span>
-						<span>{userProfile?.speciality || 'Developer'}</span>
+				<div className='w-full flex justify-between'>
+					<div>
+						<h2 className='font-extrabold text-3xl text-white'>
+							{userProfile?.display_name}
+						</h2>
+						<div className='text-[#94a3b8] flex items-center gap-2 mt-1'>
+							<span>@{userProfile?.tag || userProfile?.username}</span>
+							<span className='text-[#94a3b8]'>•</span>
+							<span>{userProfile?.speciality || 'Developer'}</span>
+						</div>
+					</div>
+					<div>
+						<span>
+							<Settings2
+								onClick={onOpenSettings}
+								className={cn(
+									'cursor-pointer text-[#94a3b8] transition-opacity opacity-0',
+									isHovering && 'opacity-100',
+								)}
+								size={25}
+							/>
+						</span>
 					</div>
 				</div>
 			</div>
 			<p className='text-[#94A3B8] text-lg'>
-				Sharing pragmatic UI patterns, API helpers, and infrastructure snippets
-				that make production code easier to ship and maintain.
+				{userProfile?.about || 'No description'}
 			</p>
 			<div>
-				<ul className='flex items-center gap-2'>
-					{userProfile?.social_medias.map((socialMedia, index) => {
-						// 1. Находим нужную иконку в словаре
-						const IconComponent =
-							socialIconsMap[socialMedia] || AzureEntraGlobalSecureAccess;
+				<ul className='flex items-center gap-3 flex-wrap'>
+					{(userProfile?.social_medias || []).map((socialRaw, index) => {
+						// Если это строка, парсим её в объект. Если уже объект — оставляем как есть.
+						let social: SocialMedia;
+						try {
+							social =
+								typeof socialRaw === 'string'
+									? JSON.parse(socialRaw)
+									: socialRaw;
+						} catch (e) {
+							console.error('Ошибка парсинга social_media:', e);
+							return null; 
+						}
+
+						if (!social || !social.name) return null;
+
+						const IconComponent = socialIconsMap[social.name] || AzureEntraGlobalSecureAccess;
 
 						return (
-							<li
-								className='flex items-center gap-2 text-[#CBD5E1] text-sm font-semibold bg-[#151a29] border border-[#2a3040] rounded-3xl px-4 py-2 cursor-pointer transition-colors hover:bg-[#1c2336]'
-								key={index}
+							<a
+								key={social.id || index}
+								href={social.link}
+								target='_blank'
+								className='flex items-center gap-2 text-[#CBD5E1] text-sm font-semibold bg-[#151a29] border border-[#2a3040] rounded-3xl px-4 py-2 cursor-pointer transition-colors hover:bg-[#1c2336] hover:text-white'
 							>
-								{/* 2. Рендерим иконку и задаем ей размер/цвет через Tailwind */}
 								<IconComponent className='w-5 h-5 text-[#38BDF8]' />
-
-								{/* 3. Оставляем текстовое название (или можешь удалить, если нужны только иконки) */}
-								<span>{socialMedia}</span>
-							</li>
+								<span>{social.name}</span>
+							</a>
 						);
 					})}
 				</ul>
@@ -82,6 +108,6 @@ export const ProfileAbout = ({ userProfile }: ProfileLeftSideProps) => {
 					<p className='text-[#94A3B8] font-medium'>upvotes received</p>
 				</div>
 			</div>
-		</>
+		</div>
 	);
 };
