@@ -23,17 +23,17 @@ export const ProfileAbout = ({ userProfile, onOpenSettings }: ProfileAboutProps)
 		<div ref={profileRef} className='flex flex-col gap-5'>
 			<div className='flex gap-4'>
 				<div className='w-25 h-25'>
-					{userProfile?.avatar_url === undefined ? (
-						<img
-							className='rounded-3xl'
-							src='https://img.magnific.com/premium-vector/default-avatar-profile-icon-social-media-user-image-gray-avatar-icon-blank-profile-silhouette-vector-illustration_561158-3407.jpg?semt=ais_hybrid&w=740&q=80'
-							alt=''
-						/>
-					) : (
+					{userProfile?.avatar_url ? (
 						<img
 							className='rounded-3xl'
 							src={`${userProfile?.avatar_url}`}
 							alt='avatar'
+						/>
+					) : (
+						<img
+							className='rounded-3xl'
+							src='https://img.magnific.com/premium-vector/default-avatar-profile-icon-social-media-user-image-gray-avatar-icon-blank-profile-silhouette-vector-illustration_561158-3407.jpg?semt=ais_hybrid&w=740&q=80'
+							alt=''
 						/>
 					)}
 				</div>
@@ -67,35 +67,39 @@ export const ProfileAbout = ({ userProfile, onOpenSettings }: ProfileAboutProps)
 			</p>
 			<div>
 				<ul className='flex items-center gap-3 flex-wrap'>
-					{(userProfile?.social_medias || []).map((socialRaw, index) => {
-						// Если это строка, парсим её в объект. Если уже объект — оставляем как есть.
-						let social: SocialMedia;
-						try {
-							social =
-								typeof socialRaw === 'string'
-									? JSON.parse(socialRaw)
-									: socialRaw;
-						} catch (e) {
-							console.error('Ошибка парсинга social_media:', e);
-							return null; 
-						}
+					{userProfile?.social_medias === null ? (
+						<span className='text-[#94a3b8] text-lg'>No social media</span>
+					) : ((userProfile?.social_medias || []).map((socialRaw, index) => {
+							// Если это строка, парсим её в объект. Если уже объект — оставляем как есть.
+							let social: SocialMedia;
+							try {
+								social =
+									typeof socialRaw === 'string'
+										? JSON.parse(socialRaw)
+										: socialRaw;
+							} catch (e) {
+								console.error('Ошибка парсинга social_media:', e);
+								return null;
+							}
 
-						if (!social || !social.name) return null;
+							if (!social || !social.name) return null;
 
-						const IconComponent = socialIconsMap[social.name] || AzureEntraGlobalSecureAccess;
+							const IconComponent =
+								socialIconsMap[social.name] || AzureEntraGlobalSecureAccess;
 
-						return (
-							<a
-								key={social.id || index}
-								href={social.link}
-								target='_blank'
-								className='flex items-center gap-2 text-[#CBD5E1] text-sm font-semibold bg-[#151a29] border border-[#2a3040] rounded-3xl px-4 py-2 cursor-pointer transition-colors hover:bg-[#1c2336] hover:text-white'
-							>
-								<IconComponent className='w-5 h-5 text-[#38BDF8]' />
-								<span>{social.name}</span>
-							</a>
-						);
-					})}
+							return (
+								<a
+									key={social.id || index}
+									href={social.link}
+									target='_blank'
+									className='flex items-center gap-2 text-[#CBD5E1] text-sm font-semibold bg-[#151a29] border border-[#2a3040] rounded-3xl px-4 py-2 cursor-pointer transition-colors hover:bg-[#1c2336] hover:text-white'
+								>
+									<IconComponent className='w-5 h-5 text-[#38BDF8]' />
+									<span>{social.name}</span>
+								</a>
+							);
+						})
+					)}
 				</ul>
 			</div>
 			<div className='w-full h-auto flex items-center gap-4 mt-2'>

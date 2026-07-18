@@ -9,9 +9,11 @@ import { supabase } from '../../utils/supabase';
 import { Input } from '../ui/Input';
 
 import { AuntatificatedUserMenu } from '../features/AuntatificatedUserMenu';
+import type { UserProfile } from '../../pages/Profile';
 
 export const Header = () => {
 	const [user, setUser] = useState<User | null>(null);
+	const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 	const [open, setOpened] = useState<boolean>(false);
 	const [loading, setLoading] = useState<boolean>(true);
 
@@ -30,10 +32,33 @@ export const Header = () => {
 		return () => subscription.unsubscribe();
 	}, []);
 
+	useEffect(() => {
+			if (user?.id) {
+				async function fetchUser() {
+					setLoading(true);
+					try {
+						const { data } = await supabase
+							.from('profiles')
+							.select('*')
+							.eq('id', user?.id);
+	
+						if (data) {
+							setUserProfile(data[0]);
+						}
+					} catch (error) {
+						console.log(error);
+					} finally {
+						setLoading(false);
+					}
+				}
+				fetchUser();
+			}
+		}, [user?.id]);
+
+	console.log(user)
+
 	return (
-		<header
-			className='py-6 px-10 flex items-center justify-between border-b border-[#222b3e] max-lg:px-4'
-		>
+		<header className='py-6 px-10 flex items-center justify-between border-b border-[#222b3e] max-lg:px-4'>
 			<Link to={'/'}>
 				<div className='flex items-center gap-3'>
 					<div className='flex items-center justify-center w-11 h-11 rounded-xl bg-linear-to-br from-[#38BDF8] to-[#34D399] shadow-[0px_0px_15px_0px_#38BDF8] max-lg:w-9 max-lg:h-9'>
@@ -79,7 +104,7 @@ export const Header = () => {
 				{loading ? (
 					<div className='w-18 h-11 rounded-3xl bg-[#f8fafc20] animate-pulse'></div>
 				) : user ? (
-					<AuntatificatedUserMenu user_metadata={user.user_metadata} />
+					<AuntatificatedUserMenu user={userProfile} />
 				) : (
 					<div className='flex gap-4.5'>
 						<Link to={'/auth'}>
@@ -127,7 +152,7 @@ export const Header = () => {
 					</li>
 				</ul>
 				{user ? (
-					<AuntatificatedUserMenu user_metadata={user.user_metadata} />
+					<AuntatificatedUserMenu user={userProfile} />
 				) : (
 					<div className='flex flex-col items-center gap-4.5 w-full'>
 						<button className='w-full h-11 rounded-3xl border border-[#f8fafc38] bg-[#f8fafc20] text-white font-semibold cursor-pointer'>
@@ -138,7 +163,6 @@ export const Header = () => {
 						</button>
 					</div>
 				)}
-				
 			</div>
 		</header>
 	);

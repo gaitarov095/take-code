@@ -2,16 +2,18 @@ import { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { supabase } from "../../utils/supabase";
-import type { UserMetadata } from "@supabase/supabase-js";
-
 import { cn } from "../../utils/cn";
+
 import { useCloseDropdown } from '../../hooks/useCloseDropDown'
+import type { UserProfile } from "../../pages/Profile";
+
+import { LogOut, User } from "lucide-react";
 
 interface User {
-    user_metadata: UserMetadata;
+    user: UserProfile | null;
 }
 
-export const AuntatificatedUserMenu = ({ user_metadata }: User) => {
+export const AuntatificatedUserMenu = ({ user }: User) => {
 	const navigate = useNavigate();
 	const menuRef = useRef<HTMLDivElement>(null);
 	const [active, setActive] = useState<boolean>(false)
@@ -30,12 +32,10 @@ export const AuntatificatedUserMenu = ({ user_metadata }: User) => {
 				onClick={() => setActive(prev => !prev)}
 			>
 				<span className='text-white font-bold'>
-					{user_metadata.user_name ||
-						user_metadata.username ||
-						user_metadata.name}
+					{user?.display_name}
 				</span>
 				<div>
-					{user_metadata.avatar_url === undefined ? (
+					{user?.avatar_url === undefined ? (
 						<img
 							className='w-9 h-9 rounded-3xl'
 							src='https://img.magnific.com/premium-vector/default-avatar-profile-icon-social-media-user-image-gray-avatar-icon-blank-profile-silhouette-vector-illustration_561158-3407.jpg?semt=ais_hybrid&w=740&q=80'
@@ -44,7 +44,7 @@ export const AuntatificatedUserMenu = ({ user_metadata }: User) => {
 					) : (
 						<img
 							className='w-9 h-9 rounded-3xl'
-							src={user_metadata.avatar_url}
+							src={user?.avatar_url}
 							alt=''
 						/>
 					)}
@@ -58,14 +58,16 @@ export const AuntatificatedUserMenu = ({ user_metadata }: User) => {
 			>
 				<ul>
 					<Link to={'/profile'}>
-						<li className='text-[#94A3B8] px-4 p-3 cursor-pointer transition-colors hover:text-white'>
+						<li className='flex items-center gap-2 text-[#94A3B8] px-4 p-3 cursor-pointer transition-colors hover:text-white'>
+							<User size={19} />
 							Profile
 						</li>
 					</Link>
 					<li
 						onClick={signOut}
-						className='text-[#94A3B8] px-4 p-3 cursor-pointer rounded-b-2xl transition-colors hover:text-white hover:bg-red-800/50'
+						className='flex items-center gap-2 text-[#94A3B8] px-4 p-3 cursor-pointer rounded-b-2xl transition-colors hover:text-white border-t border-[#22293d]'
 					>
+						<LogOut size={18} />
 						Exit
 					</li>
 				</ul>

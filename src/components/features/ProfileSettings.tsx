@@ -5,7 +5,7 @@ import type { User } from '@supabase/supabase-js';
 
 import { socialIconsMap, socialMedias } from '../../mocks/mockData';
 
-import { X, Shield, Save, Link2, User as UserIcon } from 'lucide-react';
+import { X, Shield, Save, Link2, User as UserIcon, Camera } from 'lucide-react';
 import { AzureEntraGlobalSecureAccess } from '@thesvg/react';
 
 interface ProfileSettingsProps {
@@ -22,50 +22,59 @@ export const ProfileSettings = ({ onClose, user }: ProfileSettingsProps) => {
 	const [tag, setTag] = useState<string>('');
 	const [speciality, setSpeciality] = useState<string>('');
 	const [about, setAbout] = useState<string>('');
+	const [avatarUrl, setAvatarUrl] = useState<string>('');
 	const [selectedSocials, setSelectedSocials] = useState<SelectedSocials>({});
+
+	const [currentPassword, setCurrentPassword] = useState<string>('');
+	const [newPassword, setNewPassword] = useState<string>('');
+	const [confirmPassword, setConfirmPassword] = useState<string>('');
 
 	const [activeSection, setActiveSection] =
 		useState<SettingsSection>('personal');
 
 	useEffect(() => {
 		const fetchProfileData = async () => {
-			if (!user?.id) return;
+			if (activeSection === 'personal') {
+				if (!user?.id) return;
 
-			try {
-				// Тянем данные из таблицы profiles именно для этого юзера
-				const { data, error } = await supabase
-					.from('profiles')
-					.select('display_name, tag, speciality, about, social_medias')
-					.eq('id', user.id)
-					.single();
+				try {
+					// Тянем данные из таблицы profiles именно для этого юзера
+					const { data, error } = await supabase
+						.from('profiles')
+						.select('display_name, tag, speciality, about, social_medias')
+						.eq('id', user.id)
+						.single();
 
-				if (error) throw error;
+					if (error) throw error;
 
-				if (data) {
-					// Заполняем обычные текстовые инпуты
-					setDisplayName(data.display_name || '');
-					setTag(data.tag || '');
-					setSpeciality(data.speciality || '');
-					setAbout(data.about || '');
+					if (data) {
+						setDisplayName(data.display_name || '');
+						setTag(data.tag || '');
+						setSpeciality(data.speciality || '');
+						setAbout(data.about || '');
 
-					// Переводим массив соцсетей [{name, link}] обратно в объект {name: link} для стейта
-					if (Array.isArray(data.social_medias)) {
-						const socialsObject: SelectedSocials = {};
-						data.social_medias.forEach((item) => {
-							if (item && item.name) {
-								socialsObject[item.name] = item.link || '';
-							}
-						});
-						setSelectedSocials(socialsObject);
+						if (Array.isArray(data.social_medias)) {
+							const socialsObject: SelectedSocials = {};
+							data.social_medias.forEach(item => {
+								if (item && item.name) {
+									socialsObject[item.name] = item.link || '';
+								}
+							});
+							setSelectedSocials(socialsObject);
+						}
 					}
+				} catch (error) {
+					console.error('Ошибка загрузки профиля:', error);
 				}
-			} catch (error) {
-				console.error('Ошибка загрузки профиля:', error);
+			} else {
+				await supabase.auth.updateUser({
+					password: newPassword
+				})
 			}
 		};
 
 		fetchProfileData();
-	}, [user?.id]); // Сработает сразу, как только появится id пользователя
+	}, [user?.id, activeSection, newPassword ]); 
 
 	const updateProfile = async () => {
 		try {
@@ -92,6 +101,30 @@ export const ProfileSettings = ({ onClose, user }: ProfileSettingsProps) => {
 		}
 	};
 
+	const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+		if (!e.target.files || e.target.files.length === 0) return;
+		const file = e.target.files[0];
+		const fileExt = file.name.split('.').pop();
+		const filePath = `${user?.id}-${Math.random()}.${fileExt}`;
+
+		// 1. Загружаем в бакет Supabase
+		const { error: uploadError } = await supabase.storage
+			.from('avatars')
+			.upload(filePath, file, { upsert: true });
+
+		if (uploadError) return console.error(uploadError);
+
+		// 2. Получаем публичную ссылку
+		const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+
+		// 3. Сохраняем URL в стейт и обновляем таблицу profiles
+		setAvatarUrl(data.publicUrl);
+		await supabase
+			.from('profiles')
+			.update({ avatar_url: data.publicUrl })
+			.eq('id', user?.id);
+	};
+	
 	const handleToggleSocial = (name: string) => {
 		setSelectedSocials(prev => {
 			const updated = { ...prev };
@@ -115,7 +148,7 @@ export const ProfileSettings = ({ onClose, user }: ProfileSettingsProps) => {
 		<div className='fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fadeIn'>
 			<div className='absolute inset-0 cursor-pointer' onClick={onClose} />
 
-			<div className='relative w-full max-w-7xl h-137.5 bg-[#0c1321] border border-[#252d3c] rounded-4xl shadow-[0_0_50px_rgba(0,0,0,0.8)] flex overflow-hidden transform transition-all duration-300'>
+			<div className='relative w-full max-w-7xl h-150 bg-[#0c1321] border border-[#252d3c] rounded-4xl shadow-[0_0_50px_rgba(0,0,0,0.8)] flex overflow-hidden transform transition-all duration-300'>
 				<button
 					onClick={onClose}
 					className='absolute top-6 right-6 text-gray-400 hover:text-white transition-colors cursor-pointer p-1.5 hover:bg-[#19202f] rounded-xl border border-transparent hover:border-[#252c3c] z-10'
@@ -169,6 +202,29 @@ export const ProfileSettings = ({ onClose, user }: ProfileSettingsProps) => {
 									<p className='text-sm text-gray-400 mt-1'>
 										This information will be displayed on your profile.
 									</p>
+								</div>
+
+								<div className='flex flex-col gap-2'>
+									<label className='relative group w-24 h-24 rounded-full overflow-hidden border border-[#252d3c] cursor-pointer block'>
+										{/* Картинка аватара */}
+										<img
+											src={avatarUrl || '/default-avatar.png'}
+											className='w-full h-full object-cover'
+										/>
+
+										{/* Ховер-эффект с иконкой при наведении */}
+										<div className='absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity'>
+											<Camera size={20} className='text-white' />
+										</div>
+
+										{/* Скрытый инпут */}
+										<input
+											type='file'
+											accept='image/*'
+											onChange={handleAvatarChange}
+											className='hidden'
+										/>
+									</label>
 								</div>
 
 								<div className='flex flex-col gap-2'>
@@ -257,7 +313,6 @@ export const ProfileSettings = ({ onClose, user }: ProfileSettingsProps) => {
 									</ul>
 								</div>
 
-								{/* --- ДИНАМИЧЕСКИЕ ИНПУТЫ ДЛЯ ССЫЛОК --- */}
 								{Object.keys(selectedSocials).length > 0 && (
 									<div className='animate-fadeIn space-y-3 pt-2 border-t border-[#1e293b] mb-5'>
 										<label className='text-xs text-gray-400 font-semibold uppercase tracking-wider'>
@@ -272,7 +327,7 @@ export const ProfileSettings = ({ onClose, user }: ProfileSettingsProps) => {
 													key={name}
 													className='flex items-center gap-3 bg-[#111726] border border-[#1e2538] rounded-2xl mt-2 px-4 py-2 animate-slideDown'
 												>
-													<div className='flex items-center gap-2 w-1/4 min-w-[120px] text-white font-medium text-sm'>
+													<div className='flex items-center gap-2 w-1/4 min-w-30 text-white font-medium text-sm'>
 														<IconComponent className='w-4 h-4 text-[#38BDF8]' />
 														<span>{name}</span>
 													</div>
@@ -314,6 +369,8 @@ export const ProfileSettings = ({ onClose, user }: ProfileSettingsProps) => {
 										Current password
 									</label>
 									<input
+										value={currentPassword}
+										onChange={e => setCurrentPassword(e.target.value)}
 										type='password'
 										className='w-full bg-[#080e1d] border border-[#19202f] focus:border-[#34d399] rounded-2xl px-4 py-2.5 text-sm text-white outline-none transition-colors'
 										placeholder='••••••••'
@@ -325,6 +382,8 @@ export const ProfileSettings = ({ onClose, user }: ProfileSettingsProps) => {
 										New password
 									</label>
 									<input
+										value={newPassword}
+										onChange={e => setNewPassword(e.target.value)}
 										type='password'
 										className='w-full bg-[#080e1d] border border-[#19202f] focus:border-[#34d399] rounded-2xl px-4 py-2.5 text-sm text-white outline-none transition-colors'
 										placeholder='Минимум 6 символов'
@@ -336,6 +395,8 @@ export const ProfileSettings = ({ onClose, user }: ProfileSettingsProps) => {
 										Repeat your password
 									</label>
 									<input
+										value={confirmPassword}
+										onChange={e => setConfirmPassword(e.target.value)}
 										type='password'
 										className='w-full bg-[#080e1d] border border-[#19202f] focus:border-[#34d399] rounded-2xl px-4 py-2.5 text-sm text-white outline-none transition-colors'
 										placeholder='••••••••'
