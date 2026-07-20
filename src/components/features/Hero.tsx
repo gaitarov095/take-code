@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 import { codeToHtml } from 'shiki'
 
@@ -8,15 +8,16 @@ import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { CodeLoader } from '../ui/Loaders/CodeLoader';
 
-export const Hero = () => {
-    const [code, setCode] = React.useState<string>('');
-    const [copied, setCopied] = React.useState<boolean>(false);
+const snippetCode = `export function copySnippet(source: string) {
+	return navigator.clipboard.writeText(source)
+		.then(() => toast.success("Copied in 0.2s"))
+		.catch(() => toast.error("Try again"))
+	}`;
 
-    const snippetCode = `export function copySnippet(source: string) {
-    return navigator.clipboard.writeText(source)
-        .then(() => toast.success("Copied in 0.2s"))
-        .catch(() => toast.error("Try again"))
-}`
+export const Hero = () => {
+    const [code, setCode] = useState<string>('');
+    const [copied, setCopied] = useState<boolean>(false);
+	const [searchQuery, setSearchQuery] = useState<string>('');
 
     const copyCode = () => {
         navigator.clipboard.writeText(snippetCode)
@@ -27,15 +28,34 @@ export const Hero = () => {
     }
 
     useEffect(() => {
-		async function highLight() {
-			const html = await codeToHtml(snippetCode, {
-				lang: 'typescript',
-				theme: 'one-dark-pro',
-			});
-			setCode(html);
+		let isMounted = true;
+
+		async function highlight() {
+			try {
+				const html = await codeToHtml(snippetCode, {
+					lang: 'typescript',
+					theme: 'one-dark-pro',
+				});
+				if (isMounted) {
+					setCode(html);
+				}
+			} catch (error) {
+				console.error('Shiki highlight error:', error);
+			}
 		}
-		highLight();
-	}, [snippetCode]);
+
+		highlight();
+
+		return () => {
+			isMounted = false; // Защита от race condition, если компонент размонтируется во время асинхронного таска
+		};
+	}, []);
+
+	const handleSearchSubmit = () => {
+		if (!searchQuery.trim()) return;
+		console.log(`Searching for: ${searchQuery}`);
+		// Тут будет логика перехода или фильтрации
+	};
 
 	return (
 		<section className='flex flex-col items-center justify-center mt-25 px-5'>
@@ -57,14 +77,19 @@ export const Hero = () => {
 
 			<div className='flex items-center gap-2 mt-5.5 max-[640px]:flex-col'>
 				<Input
-					width={'w-130 max-md:w-110 max-sm:w-75 pr-5'}
-					height={'h-12'}
+					width={510}
+					height={50}
+					value={searchQuery}
+					onChange={setSearchQuery}
+					rounded={16}
 					iconColor='#38BDF8'
-					rounded={2}
 					placeholder='Search “auth middleware”, “pricing card”, “Rust parser”…'
-					placeholderColor='#94A3B8'
+					otherClass='max-[640px]:w-full max-sm:w-75'
 				/>
-				<button className='w-45 h-12 rounded-2xl bg-linear-to-br from-[#38BDF8] to-[#34D399] font-semibold cursor-pointer max-[640px]:w-full max-sm:w-75'>
+				<button
+					onClick={handleSearchSubmit}
+					className='w-45 h-12 rounded-2xl bg-linear-to-br from-[#38BDF8] to-[#34D399] font-semibold cursor-pointer max-[640px]:w-full max-sm:w-75 text-white active:scale-98 transition-transform'
+				>
 					Explore snippets
 				</button>
 			</div>
@@ -85,11 +110,14 @@ export const Hero = () => {
 					</div>
 					<Button onClick={copyCode} copiedStatus={copied} />
 				</div>
-				<div className='w-full h-full px-6 py-6 font-mono text-lg overflow-x-auto [&_pre]:bg-transparent!'>
+				<div className='w-full h-full px-6 py-6 font-mono text-lg overflow-x-auto selection:bg-[#38bff833] [&_pre]:bg-transparent! [&_pre]:outline-hidden'>
 					{code ? (
-						<div dangerouslySetInnerHTML={{ __html: code }} />
+						<div
+							className='text-left leading-relaxed'
+							dangerouslySetInnerHTML={{ __html: code }}
+						/>
 					) : (
-						<div className='w-full h-full flex items-center justify-center'>
+						<div className='w-full min-h-35 flex items-center justify-center'>
 							<CodeLoader />
 						</div>
 					)}

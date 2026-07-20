@@ -1,109 +1,168 @@
-import { useState } from "react";
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Star } from 'lucide-react';
 
-import { motion } from "framer-motion";
-import { Star } from "lucide-react";
+import { Language } from '../ui/Language';
+import { CodeInput } from '../ui/CodeInput';
+import { UserTag } from '../ui/UserTag';
+import { Button } from '../ui/Button';
 
-import { Language } from "../ui/Language";
-import { CodeInput } from "../ui/CodeInput";
-import { UserTag } from "../ui/UserTag";
-import { Button } from "../ui/Button";
+import { SnippetSkeleton } from '../ui/Skeletons/SnippetSkeleton'; // <--- Импортируем скелетон
 
-import { snippetsCards, snippetsCards2, snippetsCards3 } from "../../mocks/mockData";
+import type { snippetCard } from './Showcase';
+import { supabase } from '../../utils/supabase';
 
 const containerVariants = {
 	hidden: { opacity: 0 },
 	visible: {
 		opacity: 1,
 		transition: {
-			staggerChildren: 0.15,
+			staggerChildren: 0.08, // Сделали чуть быстрее для динамичности
 		},
 	},
 };
 
 const cardVariants = {
-    hidden: { 
-        opacity: 0, 
-        y: 40 
-    },
-    visible: { 
-        opacity: 1, 
-        y: 0,
-        transition: {
-            type: 'spring',
-            stiffness: 100,
-            damping: 15,
-        },
-    },
+	hidden: { opacity: 0, y: 20 },
+	visible: {
+		opacity: 1,
+		y: 0,
+		transition: {
+			type: 'spring',
+			stiffness: 120,
+			damping: 14,
+		},
+	},
 } as const;
 
 type SnippetsProps = {
+	snippets: snippetCard[] | null;
 	activeSnippetCategory: string;
+	onToggleStar: (snippetId: string, isStarred: boolean) => void;
 };
 
-export const Snippets = ({ activeSnippetCategory }: SnippetsProps) => {
-	const [copied, setCopied] = useState<number>(0);
+export const Snippets = ({
+	snippets,
+	activeSnippetCategory,
+	onToggleStar
+}: SnippetsProps) => {
+	const [copied, setCopied] = useState<string>('');
 
-	const renderingSnippetsCards = activeSnippetCategory === 'Popular' ? snippetsCards : activeSnippetCategory === 'UI' ? snippetsCards2 : snippetsCards3;
-
-	const copyCode = (id: number) => {
-		// Находим нужный сниппет прямо в текущей активной выборке
-		const currentSnippet = renderingSnippetsCards.find(s => s.id === id);
+	const copyCode = async (snippetId: string) => {
+		const currentSnippet = snippets?.find(s => s.id === snippetId);
 
 		if (currentSnippet) {
-			navigator.clipboard.writeText(currentSnippet.code).then(() => {
-				setCopied(id);
-				setTimeout(() => setCopied(0), 2000);
+			await navigator.clipboard.writeText(currentSnippet.code).then(() => {
+				setCopied(snippetId);
+				setTimeout(() => setCopied(''), 2000);
 			});
+		}
+
+		// Вызов RPC с логированием
+		const { data, error } = await supabase.rpc('increment_copied', {
+			row_id: snippetId,
+		});
+
+		if (error) {
+			console.error('Ошибка RPC increment_copied:', error);
+		} else {
+			console.log('Новое значение copied_count из БД:', data);
 		}
 	};
 
+	if (snippets === null) {
+		return (
+			<div className='grid grid-cols-1 md:grid-cols-2 gap-4 w-full mt-1 auto-rows-fr'>
+				{Array.from({ length: 6 }).map((_, index) => (
+					<SnippetSkeleton key={index} />
+				))}
+			</div>
+		);
+	}
+
+	if (snippets.length === 0) {
+		return (
+			<div className='grid grid-cols-1 md:grid-cols-2 gap-4 w-full mt-1 auto-rows-fr'>
+				В категории "{activeSnippetCategory}" пока нет сниппетов.
+			</div>
+		);
+	}
+
 	return (
-		<motion.ul
-			key={activeSnippetCategory}
-			className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full mt-1 auto-rows-fr'
-			variants={containerVariants}
-			initial='hidden'
-			whileInView='visible'
-			viewport={{ once: true, amount: 0.1 }}
-		>
-			{renderingSnippetsCards.map(snippet => (
-				<motion.li
-					className='w-full h-full bg-[#0b1220] border border-[#242c3b] rounded-3xl px-5 py-5 flex flex-col justify-between'
-					key={snippet.id}
-					variants={cardVariants}
-				>
-					{/* Верхняя часть карточки (Язык и звезды) */}
-					<div>
-						<div className='flex items-center justify-between'>
-							<Language language={snippet.language} />
-							<span className='flex items-center gap-1.5 text-[#cbd5e1] font-semibold'>
-								<Star className='text-[#e3d07f]' size={20} />
-								{snippet.stars}
-							</span>
+		<AnimatePresence mode='wait'>
+			<motion.ul
+				key={activeSnippetCategory}
+				className='grid grid-cols-1 md:grid-cols-2 gap-4 w-full mt-1 auto-rows-fr'
+				variants={containerVariants}
+				initial='hidden'
+				animate='visible'
+			>
+				{snippets.map(snippet => (
+					<motion.li
+						className='w-full h-full bg-[#0b1220] border border-[#242c3b] rounded-3xl px-5 py-5 flex flex-col justify-between'
+						key={snippet.id}
+						variants={cardVariants}
+					>
+						<div>
+							<div className='flex items-center justify-between'>
+								<UserTag
+									user={snippet.profiles?.tag || '@takecode'}
+									avatar={
+										snippet.profiles?.avatar_url ||
+										'https://img.magnific.com/premium-vector/default-avatar-profile-icon-social-media-user-image-gray-avatar-icon-blank-profile-silhouette-vector-illustration_561158-3407.jpg?semt=ais_hybrid&w=740&q=80'
+									}
+								/>
+								<Language
+									language={snippet.languages?.name || 'plaintext'}
+									icon={snippet.languages?.icon}
+									background={snippet.languages?.background}
+									color={snippet.languages?.color}
+									borderColor={snippet.languages?.borderColor}
+								/>
+							</div>
+
+							<div className='mt-4'>
+								<h3 className='text-white font-bold text-2xl'>
+									{snippet.title}
+								</h3>
+								<p className='text-[#94A3B8] text-[16px] font-semibold mt-1'>
+									{snippet.description}
+								</p>
+							</div>
 						</div>
 
-						{/* Контент: Название и описание */}
-						<div className='mt-4'>
-							<h3 className='text-white font-bold text-2xl'>{snippet.title}</h3>
-							<p className='text-[#94A3B8] text-[16px] font-semibold mt-1'>
-								{snippet.description}
-							</p>
+						<div className='mt-3 w-full'>
+							<CodeInput
+								code={snippet.code}
+								language={snippet.languages?.name || 'plaintext'}
+							/>
 						</div>
-					</div>
 
-					<div className='mt-3 w-full'>
-						<CodeInput code={snippet.code} language={snippet.language} />
-					</div>
-
-					<div className='mt-2 pt-2 flex items-center justify-between'>
-						<UserTag user={snippet.userTag} />
-						<Button
-							onClick={() => copyCode(snippet.id)}
-							copiedStatus={snippet.id === copied}
-						/>
-					</div>
-				</motion.li>
-			))}
-		</motion.ul>
+						<div className='mt-2 pt-2 flex items-center justify-between'>
+							<button
+								onClick={() =>
+									onToggleStar(snippet.id, !!snippet.is_starred_by_user)
+								}
+								className='flex items-center gap-1.5 text-[#cbd5e1] font-semibold hover:opacity-80 transition-opacity cursor-pointer'
+							>
+								<Star
+									className={
+										snippet.is_starred_by_user
+											? 'text-[#e3d07f] fill-[#e3d07f]' // Закрашиваем, если лайкнуто
+											: 'text-[#cbd5e1]'
+									}
+									size={20}
+								/>
+								<span>{snippet.stars_count}</span>
+							</button>
+							<Button
+								onClick={() => copyCode(snippet.id)}
+								copiedStatus={snippet.id === copied}
+							/>
+						</div>
+					</motion.li>
+				))}
+			</motion.ul>
+		</AnimatePresence>
 	);
 };

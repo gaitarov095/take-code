@@ -16,6 +16,7 @@ export const Header = () => {
 	const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 	const [open, setOpened] = useState<boolean>(false);
 	const [loading, setLoading] = useState<boolean>(true);
+	const [searchQuery, setSearchQuery] = useState<string>('');
 
 	useEffect(() => {
 		supabase.auth.getSession().then(({ data: { session } }) => {
@@ -55,8 +56,6 @@ export const Header = () => {
 			}
 		}, [user?.id]);
 
-	console.log(user)
-
 	return (
 		<header className='py-6 px-10 flex items-center justify-between border-b border-[#222b3e] max-lg:px-4'>
 			<Link to={'/'}>
@@ -72,12 +71,15 @@ export const Header = () => {
 
 			<div className='max-md:hidden'>
 				<Input
-					width={'w-100 max-lg:w-60 pr-5'}
-					height={'h-11 max-lg:h-10'}
+					width={400}
+					height={45}
 					iconColor={'#64748b'}
-					rounded={3}
+					rounded={12}
+					value={searchQuery}
+					onChange={setSearchQuery}
 					placeholder={'Search snippets, UI components...'}
 					placeholderColor={'#64748b'}
+					otherClass='max-lg:w-60 max-lg:pr-5 max-lg:h-10'
 				/>
 			</div>
 

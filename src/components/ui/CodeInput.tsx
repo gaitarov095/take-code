@@ -36,7 +36,7 @@ export const CodeInput = ({ code, language }: CodeInputProps) => {
 				<CodeLoader />
 			) : (
 				<div
-					className='w-full max-h-10 overflow-hidden font-jetbrains line-clamp-3 text-ellipsis whitespace-pre-wrap wrap-break-word'
+					className='w-full max-h-20 overflow-hidden font-jetbrains line-clamp-3 text-ellipsis whitespace-pre-wrap wrap-break-word'
 					dangerouslySetInnerHTML={{ __html: codeHTML }}
 				/>
 			)}

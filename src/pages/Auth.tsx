@@ -31,7 +31,6 @@ export const Auth = () => {
 				if (error) throw error;
 
 				console.log('Success', data.user);
-				// Тут можно сделать редирект на главную страницу, например: window.location.href = '/'
 				navigate('/')
 			} else {
 				const { error } = await supabase.auth.signUp({

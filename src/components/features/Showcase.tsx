@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { cn } from '../../utils/cn';
 
 import { FeaturCards } from './FeaturCards';
 import { Snippets } from './Snippets';
+import { supabase } from '../../utils/supabase';
 
 const categories = [
 	{
@@ -15,27 +16,159 @@ const categories = [
 	},
 	{
 		id: 2,
-		name: 'UI',
+		name: 'Newest',
 		color: '#ddd6fe',
 		bg: '#1b1936',
 		borderColor: '#342359',
 	},
 	{
 		id: 3,
-		name: 'Backend',
+		name: 'Oldest',
 		color: '#fde68a',
 		bg: '#242321',
 		borderColor: '#4f4221',
 	},
 ];
 
+export interface snippetCard {
+	id: string;
+	user_id: string;
+	language_id: string;
+	framework_id?: string;
+	title: string;
+	description: string;
+	code: string;
+	tags: string[];
+	stars_count: number;
+	snippet_stars?: { user_id: string }[];
+	is_starred_by_user?: boolean; // Удобный флаг для UI
+	copied_count: number;
+	languages?: {
+		name: string;
+		icon: string;
+		background: string;
+		color: string;
+		borderColor: string;
+	} | null;
+	profiles?: {
+		tag: string;
+		avatar_url: string;
+	} | null;
+}
+
 export const Showcase = () => {
+	const [snippetsCards, setSnippetsCards] = useState<snippetCard[] | null>(
+		null,
+	);
 	const [active, setActive] = useState<number>(1);
-	const [activeSnippetCategory, setActiveSnippetCategory] = useState<string>('Popular');
+	const [activeSnippetCategory, setActiveSnippetCategory] =
+		useState<string>('Popular');
 
 	const setActivesRules = (id: number, snippetCategory: string) => {
+		if (activeSnippetCategory === snippetCategory) return;
+
 		setActive(id);
 		setActiveSnippetCategory(snippetCategory);
+		setSnippetsCards(null);
+	};
+
+	useEffect(() => {
+		// 1. Объявляем функцию
+		const fetchSnippets = async () => {
+			setSnippetsCards(null); // Сбрасываем в null для показа скелетонов
+
+			const {
+				data: { user },
+			} = await supabase.auth.getUser();
+			const currentUserId = user?.id;
+
+			let query = supabase.from('snippets').select(`
+                *,
+                languages(name, color, background, borderColor, icon),
+                profiles:user_id(tag, avatar_url),
+                snippets_stars(user_id)
+            `);
+
+			if (currentUserId) {
+				query = query.eq('snippets_stars.user_id', currentUserId);
+			}
+
+			if (activeSnippetCategory === 'Newest') {
+				query = query.order('created_at', { ascending: false }).limit(6)
+			} else {
+				query = query.order('stars_count', { ascending: false }).limit(6)
+			}
+
+			const { data, error } = await query;
+
+			if (!error && data) {
+				const formattedData = data.map(item => {
+					const hasStarred =
+						Array.isArray(item.snippets_stars) &&
+						item.snippets_stars.some(
+							(star: { user_id: string }) => star.user_id === currentUserId,
+						);
+
+					return {
+						...item,
+						is_starred_by_user: Boolean(hasStarred),
+					};
+				});
+
+				setSnippetsCards(formattedData);
+			}
+		};
+
+		// 2. ВЫЗЫВАЕМ ЕЁ!
+		fetchSnippets();
+	}, [activeSnippetCategory]); // Перезапускаем при смене категории
+
+	const handleToggleStar = async (snippetId: string, isStarred: boolean) => {
+		const {
+			data: { user },
+		} = await supabase.auth.getUser();
+
+		if (!user) {
+			alert('Пожалуйста, авторизуйтесь, чтобы ставить лайки!');
+			return;
+		}
+
+		// 1. Мгновенно обновляем UI
+		setSnippetsCards(
+			prev =>
+				prev?.map(snippet => {
+					if (snippet.id === snippetId) {
+						return {
+							...snippet,
+							is_starred_by_user: !isStarred,
+							stars_count: isStarred
+								? Math.max(0, snippet.stars_count - 1)
+								: snippet.stars_count + 1,
+						};
+					}
+					return snippet;
+				}) || null,
+		);
+
+		// 2. Делаем запрос к БД
+		if (isStarred) {
+			const { error } = await supabase
+				.from('snippets_stars')
+				.delete()
+				.eq('snippet_id', snippetId)
+				.eq('user_id', user.id);
+
+			if (error) console.error('Ошибка при удалении лайка:', error);
+		} else {
+			const { error } = await supabase
+				.from('snippets_stars')
+				.upsert(
+					{ snippet_id: snippetId, user_id: user.id },
+					{ onConflict: 'user_id, snippet_id' },
+				);
+
+			if (error) console.error('Ошибка при добавлении лайка:', error);
+		}
 	};
 
 	return (
@@ -94,7 +227,11 @@ export const Showcase = () => {
 
 				{/* Сюда чуть позже встанет твоя сетка с 6 карточками */}
 				<div className='w-full mt-8'>
-					<Snippets activeSnippetCategory={activeSnippetCategory} />
+					<Snippets
+						snippets={snippetsCards}
+						activeSnippetCategory={activeSnippetCategory}
+						onToggleStar={handleToggleStar}
+					/>
 				</div>
 			</div>
 		</section>
