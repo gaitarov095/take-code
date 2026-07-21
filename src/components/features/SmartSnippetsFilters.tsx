@@ -139,7 +139,9 @@ export const SmartSnippetsFilters = ({
 										/>
 										{language.name}
 									</div>
-									<span>count</span>
+									<span>
+										{language.snippets?.[0]?.count ?? 0}
+									</span>
 								</li>
 							))}
 						</ul>

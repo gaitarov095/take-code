@@ -23,10 +23,11 @@ import { useSnippetStars } from '../hooks/useSnippetStars';
 
 
 export type languagesT = {
-    id: string,
-    name: string
-    icon: string
-}
+	id: string;
+	name: string;
+	icon: string;
+	snippets?: { count: number }[];
+};
 
 export type frameworksT = {
     id: string,
@@ -69,14 +70,8 @@ export const ExploreHub = () => {
 	const [currentPage, setCurrentPage] = useState<number>(1);
 	const [totalCount, setTotalCount] = useState<number>(0);
 
-	const pageSize = 6;
+	const pageSize = 8;
 	const totalPages = Math.ceil(totalCount / pageSize);
-
-	// const handleSearchSubmit = () => {
-	// 	if (!searchQuery.trim()) return;
-	// 	console.log(`Searching for: ${searchQuery}`);
-	// 	// Тут будет логика перехода или фильтрации
-	// };
 
 	const toggleReset = () => {
 		setReset(!reset);
@@ -85,13 +80,19 @@ export const ExploreHub = () => {
 		setSelectedTag('');
 	};
 
+	const searchFilteredSnippets = snippets
+		? snippets.filter(snippet =>
+				snippet.title.toLowerCase().includes(searchQuery.toLowerCase()),
+			)
+		: null;
+
 	useEffect(() => {
 		async function fetchData() {
 			setLoading(true);
 			try {
 				const [languagesResponce, libsFrameworkdResponce, tagsResponce] =
 					await Promise.all([
-						supabase.from('languages').select('*'),
+						supabase.from('languages').select('*, snippets(count)'),
 						supabase.from('frameworks').select('*'),
 						supabase.from('tags').select('*'),
 					]);
@@ -126,16 +127,21 @@ export const ExploreHub = () => {
 				// 2. Добавляем { count: 'exact' } для получения точного количества записей в БД
 				let query = supabase.from('snippets').select(
 					`
-                    *,
-                    languages(name, color, background, borderColor, icon),
-                    profiles:user_id(tag, avatar_url),
-                    snippets_stars(user_id)
-                `,
+						*,
+						languages(name, color, background, borderColor, icon),
+						profiles:user_id(tag, avatar_url),
+						snippets_stars(user_id),
+						dependencies:snippet_dependencies(
+							dependencies(id, name, install_command, color, bg, border_color)
+						)
+					`,
 					{ count: 'exact' },
 				);
 
 				// Фильтры
-				if (selectedLanguage) query = query.eq('language_id', selectedLanguage);
+				if (selectedLanguage) {
+					query = query.eq('language_id', selectedLanguage);
+				}
 				if (selectedFramework)
 					query = query.eq('framework_id', selectedFramework);
 				if (selectedTag && currentTag)
@@ -178,6 +184,7 @@ export const ExploreHub = () => {
 						};
 					});
 
+					console.log(formattedData)
 					setSnippets(formattedData);
 				}
 			} catch (err) {
@@ -295,7 +302,7 @@ export const ExploreHub = () => {
 					</div>
 					<div className='mt-4'>
 						<Snippets
-							snippets={snippets}
+							snippets={searchFilteredSnippets}
 							onToggleStar={handleToggleStar}
 							activeSnippetCategory={selectedFilter}
 						/>

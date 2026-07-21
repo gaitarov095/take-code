@@ -31,6 +31,15 @@ const categories = [
 	},
 ];
 
+export type dependencyT = {
+	id: string;
+	name: string;
+	install_command: string;
+	color: string;
+	bg: string;
+	border_color: string;
+};
+
 export interface snippetCard {
 	id: string;
 	user_id: string;
@@ -44,6 +53,7 @@ export interface snippetCard {
 	snippet_stars?: { user_id: string }[];
 	is_starred_by_user?: boolean; // Удобный флаг для UI
 	copied_count: number;
+	dependencies?: { dependencies: dependencyT }[];
 	languages?: {
 		name: string;
 		icon: string;

@@ -44,7 +44,7 @@ type SnippetsProps = {
 export const Snippets = ({
 	snippets,
 	activeSnippetCategory,
-	onToggleStar
+	onToggleStar,
 }: SnippetsProps) => {
 	const [copied, setCopied] = useState<string>('');
 
@@ -82,8 +82,10 @@ export const Snippets = ({
 
 	if (snippets.length === 0) {
 		return (
-			<div className='w-full h-100 flex items-center justify-center text-[#94A3B8]'>
-				В категории "{activeSnippetCategory}" пока нет сниппетов.
+			<div className='grid grid-cols-1 md:grid-cols-2 gap-4 w-full mt-1 auto-rows-fr'>
+				{Array.from({ length: 6 }).map((_, index) => (
+					<SnippetSkeleton key={index} />
+				))}
 			</div>
 		);
 	}
@@ -165,4 +167,4 @@ export const Snippets = ({
 			</motion.ul>
 		</AnimatePresence>
 	);
-};
+};;
