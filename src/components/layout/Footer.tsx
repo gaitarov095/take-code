@@ -9,7 +9,6 @@ export const Footer = () => {
 	return (
 		<footer className='w-full border-t border-[#222b3e] bg-[#020617]/40 backdrop-blur-md px-4 sm:px-8 lg:px-16 py-8 md:py-12 flex flex-col items-center justify-center'>
 			<div className='w-full max-w-7xl flex flex-col md:flex-row md:items-center md:justify-between gap-8 md:gap-4'>
-				{/* ЛОГОТИП: на десктопе слева, на мобилке по центру */}
 				<Link to={'/'}>
 					<div className='flex items-center gap-3 justify-center md:justify-start select-none'>
 						<div className='flex items-center justify-center w-10 h-10 rounded-xl bg-linear-to-br from-[#38BDF8] to-[#34D399] shadow-[0px_0px_20px_0px_rgba(56,189,248,0.25)] max-lg:w-9 max-lg:h-9'>
@@ -21,7 +20,6 @@ export const Footer = () => {
 					</div>
 				</Link>
 
-				{/* НАВИГАЦИЯ: аккуратные отступы, центрирование на мобилках */}
 				<ul className='flex items-center gap-6 sm:gap-8 justify-center text-[16px] font-medium text-[#94A3B8] max-sm:text-sm'>
 					<Link to='/exploreHub'>
 						<li>
@@ -46,7 +44,6 @@ export const Footer = () => {
 					</Link>
 				</ul>
 
-				{/* СОЦСЕТИ: на десктопе справа, на мобилке снизу по центру */}
 				<ul className='flex items-center gap-2 justify-center'>
 					<li>
 						<a

@@ -4,13 +4,14 @@ import { ChevronDown } from 'lucide-react';
 
 import { useState, useRef, useEffect } from 'react';
 
-const sortingFiltersT = ['Popular', 'Most Copied', 'Newest', 'Oldest'];
+type Props = {
+	filtersList: string[];
+	selectedFilter: string[0]
+	setSelectedFilter: (filter: string) => void
+};
 
-export const SortDropdown = () => {
+export const SortDropdown = ({ filtersList, selectedFilter, setSelectedFilter }: Props) => {
 	const [isOpen, setIsOpen] = useState<boolean>(false);
-	const [selectedFilter, setSelectedFilter] = useState<string>(
-		sortingFiltersT[0],
-	);
 	const dropdownRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
@@ -55,7 +56,7 @@ export const SortDropdown = () => {
 			{/* Выпадающий список */}
 			{isOpen && (
 				<ul className='absolute left-0 right-0 mt-2 bg-[#060b1b] border border-[#22293d] rounded-xl py-1.5 shadow-2xl z-50 animate-in fade-in slide-in-from-top-1 duration-150'>
-					{sortingFiltersT.map((item, index) => {
+					{filtersList.map((item, index) => {
 						const isSelected = item === selectedFilter;
 						return (
 							<li

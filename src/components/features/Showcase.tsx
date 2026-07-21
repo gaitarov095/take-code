@@ -5,25 +5,26 @@ import { cn } from '../../utils/cn';
 import { FeaturCards } from './FeaturCards';
 import { Snippets } from './Snippets';
 import { supabase } from '../../utils/supabase';
+import { useSnippetStars } from '../../hooks/useSnippetStars';
 
 const categories = [
 	{
 		id: 1,
-		name: 'Popular',
+		name: 'Trending',
 		color: '#bae6fd',
 		bg: '#142b43',
 		borderColor: '#1e5475',
 	},
 	{
 		id: 2,
-		name: 'Newest',
+		name: 'Most Copied',
 		color: '#ddd6fe',
 		bg: '#1b1936',
 		borderColor: '#342359',
 	},
 	{
 		id: 3,
-		name: 'Oldest',
+		name: 'Recent',
 		color: '#fde68a',
 		bg: '#242321',
 		borderColor: '#4f4221',
@@ -60,9 +61,12 @@ export const Showcase = () => {
 	const [snippetsCards, setSnippetsCards] = useState<snippetCard[] | null>(
 		null,
 	);
+
+	const { handleToggleStar } = useSnippetStars(setSnippetsCards);
+
 	const [active, setActive] = useState<number>(1);
 	const [activeSnippetCategory, setActiveSnippetCategory] =
-		useState<string>('Popular');
+		useState<string>('Trending');
 
 	const setActivesRules = (id: number, snippetCategory: string) => {
 		if (activeSnippetCategory === snippetCategory) return;
@@ -93,10 +97,12 @@ export const Showcase = () => {
 				query = query.eq('snippets_stars.user_id', currentUserId);
 			}
 
-			if (activeSnippetCategory === 'Newest') {
-				query = query.order('created_at', { ascending: false }).limit(6)
-			} else {
-				query = query.order('stars_count', { ascending: false }).limit(6)
+			if (activeSnippetCategory === 'Trending') {
+				query = query.order('stars_count', { ascending: false }).limit(4)
+			} else if (activeSnippetCategory === 'Most Copied') {
+				query = query.order('copied_count', { ascending: false }).limit(4)
+			} else if (activeSnippetCategory === 'Recent') {
+				query = query.order('created_at', { ascending: false }).limit(4)
 			}
 
 			const { data, error } = await query;
@@ -122,54 +128,6 @@ export const Showcase = () => {
 		// 2. ВЫЗЫВАЕМ ЕЁ!
 		fetchSnippets();
 	}, [activeSnippetCategory]); // Перезапускаем при смене категории
-
-	const handleToggleStar = async (snippetId: string, isStarred: boolean) => {
-		const {
-			data: { user },
-		} = await supabase.auth.getUser();
-
-		if (!user) {
-			alert('Пожалуйста, авторизуйтесь, чтобы ставить лайки!');
-			return;
-		}
-
-		// 1. Мгновенно обновляем UI
-		setSnippetsCards(
-			prev =>
-				prev?.map(snippet => {
-					if (snippet.id === snippetId) {
-						return {
-							...snippet,
-							is_starred_by_user: !isStarred,
-							stars_count: isStarred
-								? Math.max(0, snippet.stars_count - 1)
-								: snippet.stars_count + 1,
-						};
-					}
-					return snippet;
-				}) || null,
-		);
-
-		// 2. Делаем запрос к БД
-		if (isStarred) {
-			const { error } = await supabase
-				.from('snippets_stars')
-				.delete()
-				.eq('snippet_id', snippetId)
-				.eq('user_id', user.id);
-
-			if (error) console.error('Ошибка при удалении лайка:', error);
-		} else {
-			const { error } = await supabase
-				.from('snippets_stars')
-				.upsert(
-					{ snippet_id: snippetId, user_id: user.id },
-					{ onConflict: 'user_id, snippet_id' },
-				);
-
-			if (error) console.error('Ошибка при добавлении лайка:', error);
-		}
-	};
 
 	return (
 		<section className='w-full max-w-7xl mx-auto px-4 py-20 flex flex-col gap-24'>

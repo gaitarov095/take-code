@@ -3,10 +3,14 @@ import { useEffect, useState } from 'react'
 import { cn } from '../utils/cn';
 import { supabase } from '../utils/supabase';
 
-import { SmartSnippetsFilters } from '../components/features/SmartSnippetsFilters';
-
 import { Filter, Search, X } from 'lucide-react';
+
+import { SmartSnippetsFilters } from '../components/features/SmartSnippetsFilters';
 import { SortDropdown } from '../components/features/SortDropDown';
+
+import type { snippetCard } from '../components/features/Showcase';
+import { Snippets } from '../components/features/Snippets';
+import { useSnippetStars } from '../hooks/useSnippetStars';
 
 
 export type languagesT = {
@@ -25,26 +29,34 @@ export type tagsT = {
 	name: string;
 };
 
+const sortingFiltersT = ['Trending', 'Most Copied', 'Recent'];
+
 export const ExploreHub = () => {
-    const [selectedLanguage, setSelectedLanguage] = useState<string>('');
-    const [selectedFramework, setSelectedFramework] = useState<string>('');
-    const [selectedTag, setSelectedTag] = useState<string>('');
-    
-    const [reset, setReset] = useState<boolean>(false);
+	const [snippets, setSnippets] = useState<snippetCard[] | null>([]);
+	const { handleToggleStar } = useSnippetStars(setSnippets);
 
-    const [loading, setLoading] = useState<boolean>(false);
-    const [languages, setLanguages] = useState<languagesT[] | null>([]);
-    const [frameworks, setFrameworks] = useState<frameworksT[] | null>(
-			[],
-		);
-    const [tags, setTags] = useState<tagsT[] | null>([]);
+	const [selectedLanguage, setSelectedLanguage] = useState<string>('');
+	const [selectedFramework, setSelectedFramework] = useState<string>('');
+	const [selectedTag, setSelectedTag] = useState<string>('');
+	const [selectedFilter, setSelectedFilter] = useState<string>(
+		sortingFiltersT[0],
+	);
 
-    const currentLang = languages?.find(lang => lang.id === selectedLanguage);
-    const currentFramework = frameworks?.find(fw => fw.id === selectedFramework);
-    const currentTag = tags?.find(t => t.id === selectedTag);
+	const [reset, setReset] = useState<boolean>(false);
+
+	const [loading, setLoading] = useState<boolean>(false);
+	const [languages, setLanguages] = useState<languagesT[] | null>([]);
+	const [frameworks, setFrameworks] = useState<frameworksT[] | null>([]);
+	const [tags, setTags] = useState<tagsT[] | null>([]);
+
+	const currentLang = languages?.find(lang => lang.id === selectedLanguage);
+	const currentFramework = frameworks?.find(fw => fw.id === selectedFramework);
+	const currentTag = tags?.find(t => t.id === selectedTag);
 
 	const [searchQuery, setSearchQuery] = useState<string>('');
+
 	const isActive = searchQuery?.length > 0;
+	const pageSize = 6
 
 	const handleSearchSubmit = () => {
 		if (!searchQuery.trim()) return;
@@ -52,46 +64,123 @@ export const ExploreHub = () => {
 		// Тут будет логика перехода или фильтрации
 	};
 
-    const toggleReset = () => {
-        setReset(!reset);
-        setSelectedLanguage('');
-        setSelectedFramework(''); // Сбрасываем фреймворк
-        setSelectedTag('')
-    };
+	const toggleReset = () => {
+		setReset(!reset);
+		setSelectedLanguage('');
+		setSelectedFramework(''); // Сбрасываем фреймворк
+		setSelectedTag('');
+	};
 
-    useEffect(() => {
-        async function fetchData() {
-            setLoading(true);
-            try {
-                const [
-                    languagesResponce,
-                    libsFrameworkdResponce,
-                    tagsResponce,
-                ] = await Promise.all([
-                    supabase.from('languages').select('*'),
-                    supabase.from('frameworks').select('*'),
-                    supabase.from('tags').select('*'),
-                ]);
+	useEffect(() => {
+		async function fetchData() {
+			setLoading(true);
+			try {
+				const [languagesResponce, libsFrameworkdResponce, tagsResponce] =
+					await Promise.all([
+						supabase.from('languages').select('*'),
+						supabase.from('frameworks').select('*'),
+						supabase.from('tags').select('*'),
+					]);
 
-                setLanguages(languagesResponce.data);
-                setFrameworks(libsFrameworkdResponce.data);
-                setTags(tagsResponce.data);
-            } catch (error) {
-                console.log(error);
-            } finally {
-                setLoading(false);
-            }
-        }
+				setLanguages(languagesResponce.data);
+				setFrameworks(libsFrameworkdResponce.data);
+				setTags(tagsResponce.data);
+			} catch (error) {
+				console.log(error);
+			} finally {
+				setLoading(false);
+			}
+		}
 
-        fetchData()
-    }, [])
+		fetchData();
+	}, []);
 
-    const getFilterText = () => {
-        if (!selectedLanguage) return 'Filter';
-        if (selectedLanguage && !selectedFramework) return currentLang?.name;
-        if (selectedLanguage && selectedFramework && !selectedTag) return `${currentLang?.name} -> ${currentFramework?.name}`; 
-        return `${currentLang?.name} -> ${currentFramework?.name} -> ${currentTag?.name}`;
-    };
+	useEffect(() => {
+		const fetchSnippets = async () => {
+			setSnippets([]); // Сбрасываем в пустой массив для показа скелетонов/загрузки
+
+			try {
+				const {
+					data: { user },
+				} = await supabase.auth.getUser();
+				const currentUserId = user?.id;
+
+				// 1. Формируем базовый запрос
+				let query = supabase.from('snippets').select(`
+                *,
+                languages(name, color, background, borderColor, icon),
+                profiles:user_id(tag, avatar_url),
+                snippets_stars(user_id)
+            `);
+
+				// 2. Фильтрация (НЕ ИСПОЛЬЗУЕМ .eq по snippets_stars!)
+				if (selectedLanguage) {
+					query = query.eq('language_id', selectedLanguage);
+				}
+
+				if (selectedFramework) {
+					query = query.eq('framework_id', selectedFramework);
+				}
+
+				if (selectedTag && currentTag) {
+					query = query.contains('tags', [currentTag.name]);
+				} // <-- ЗДЕСЬ ТЕПЕРЬ ЕСТЬ ЗАКРЫВАЮЩАЯ СКОБКА!
+
+				// 3. Сортировка
+				if (selectedFilter === 'Trending') {
+					query = query.order('stars_count', { ascending: false }).limit(6);
+				} else if (selectedFilter === 'Most Copied') {
+					query = query.order('copied_count', { ascending: false }).limit(6);
+				} else if (selectedFilter === 'Recent') {
+					query = query.order('created_at', { ascending: false }).limit(6);
+				}
+
+				// 4. Выполнение запроса
+				const { data, error } = await query;
+
+				if (error) {
+					console.error('Ошибка Supabase:', error);
+					return;
+				}
+
+				if (data) {
+					const formattedData = data.map(item => {
+						// Проверяем, есть ли среди всех лайков этого сниппета лайк от currentUserId
+						const hasStarred =
+							Array.isArray(item.snippets_stars) &&
+							item.snippets_stars.some(
+								(star: { user_id: string }) => star.user_id === currentUserId,
+							);
+
+						return {
+							...item,
+							is_starred_by_user: Boolean(hasStarred),
+						};
+					});
+
+					setSnippets(formattedData);
+				}
+			} catch (err) {
+				console.error('Ошибка при загрузке:', err);
+			}
+		};
+
+		fetchSnippets();
+	}, [
+		selectedLanguage,
+		selectedFramework,
+		selectedTag,
+		currentTag,
+		selectedFilter,
+	]);
+
+	const getFilterText = () => {
+		if (!selectedLanguage) return 'Filter';
+		if (selectedLanguage && !selectedFramework) return currentLang?.name;
+		if (selectedLanguage && selectedFramework && !selectedTag)
+			return `${currentLang?.name} -> ${currentFramework?.name}`;
+		return `${currentLang?.name} -> ${currentFramework?.name} -> ${currentTag?.name}`;
+	};
 
 	return (
 		<section className='w-full py-6 px-10'>
@@ -115,7 +204,7 @@ export const ExploreHub = () => {
 					</div>
 				</div>
 			</div>
-			<div className='mt-7 flex gap-5'>
+			<div className='mt-7 flex items-start gap-5'>
 				<div className='w-120 h-auto px-5 py-5 bg-[#0B1220] border border-[#94a3b838] rounded-3xl'>
 					<SmartSnippetsFilters
 						languages={languages}
@@ -168,8 +257,27 @@ export const ExploreHub = () => {
 									/>
 								</div>
 							</div>
-							<SortDropdown />
+							<SortDropdown
+								filtersList={sortingFiltersT}
+								selectedFilter={selectedFilter}
+								setSelectedFilter={setSelectedFilter}
+							/>
 						</div>
+					</div>
+					<div className='flex items-center justify-between mt-4'>
+						<h2 className='text-2xl text-[#F8FAFC] font-bold'>
+							Count matching snippets
+						</h2>
+						<p className='text-[#64748B] font-mono font-semibold'>
+							Sorted by: {selectedFilter.toLocaleLowerCase()}
+						</p>
+					</div>
+					<div className='mt-4'>
+						<Snippets
+							snippets={snippets}
+							onToggleStar={handleToggleStar}
+							activeSnippetCategory={selectedFilter}
+						/>
 					</div>
 				</div>
 			</div>
