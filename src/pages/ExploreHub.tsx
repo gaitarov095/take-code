@@ -1,5 +1,14 @@
 import { useEffect, useState } from 'react'
 
+import {
+	Pagination,
+	PaginationContent,
+	PaginationItem,
+	PaginationLink,
+	PaginationNext,
+	PaginationPrevious,
+} from '../components/ui/pagination';
+
 import { cn } from '../utils/cn';
 import { supabase } from '../utils/supabase';
 
@@ -56,13 +65,18 @@ export const ExploreHub = () => {
 	const [searchQuery, setSearchQuery] = useState<string>('');
 
 	const isActive = searchQuery?.length > 0;
-	const pageSize = 6
 
-	const handleSearchSubmit = () => {
-		if (!searchQuery.trim()) return;
-		console.log(`Searching for: ${searchQuery}`);
-		// Тут будет логика перехода или фильтрации
-	};
+	const [currentPage, setCurrentPage] = useState<number>(1);
+	const [totalCount, setTotalCount] = useState<number>(0);
+
+	const pageSize = 6;
+	const totalPages = Math.ceil(totalCount / pageSize);
+
+	// const handleSearchSubmit = () => {
+	// 	if (!searchQuery.trim()) return;
+	// 	console.log(`Searching for: ${searchQuery}`);
+	// 	// Тут будет логика перехода или фильтрации
+	// };
 
 	const toggleReset = () => {
 		setReset(!reset);
@@ -97,7 +111,7 @@ export const ExploreHub = () => {
 
 	useEffect(() => {
 		const fetchSnippets = async () => {
-			setSnippets([]); // Сбрасываем в пустой массив для показа скелетонов/загрузки
+			setSnippets([]); // Скелетоны во время загрузки
 
 			try {
 				const {
@@ -105,47 +119,53 @@ export const ExploreHub = () => {
 				} = await supabase.auth.getUser();
 				const currentUserId = user?.id;
 
-				// 1. Формируем базовый запрос
-				let query = supabase.from('snippets').select(`
-                *,
-                languages(name, color, background, borderColor, icon),
-                profiles:user_id(tag, avatar_url),
-                snippets_stars(user_id)
-            `);
+				// Расчет диапазона для Supabase
+				const from = (currentPage - 1) * pageSize;
+				const to = from + pageSize - 1;
 
-				// 2. Фильтрация (НЕ ИСПОЛЬЗУЕМ .eq по snippets_stars!)
-				if (selectedLanguage) {
-					query = query.eq('language_id', selectedLanguage);
-				}
+				// 2. Добавляем { count: 'exact' } для получения точного количества записей в БД
+				let query = supabase.from('snippets').select(
+					`
+                    *,
+                    languages(name, color, background, borderColor, icon),
+                    profiles:user_id(tag, avatar_url),
+                    snippets_stars(user_id)
+                `,
+					{ count: 'exact' },
+				);
 
-				if (selectedFramework) {
+				// Фильтры
+				if (selectedLanguage) query = query.eq('language_id', selectedLanguage);
+				if (selectedFramework)
 					query = query.eq('framework_id', selectedFramework);
-				}
-
-				if (selectedTag && currentTag) {
+				if (selectedTag && currentTag)
 					query = query.contains('tags', [currentTag.name]);
-				} // <-- ЗДЕСЬ ТЕПЕРЬ ЕСТЬ ЗАКРЫВАЮЩАЯ СКОБКА!
 
-				// 3. Сортировка
+				// Сортировка
 				if (selectedFilter === 'Trending') {
-					query = query.order('stars_count', { ascending: false }).limit(6);
+					query = query.order('stars_count', { ascending: false });
 				} else if (selectedFilter === 'Most Copied') {
-					query = query.order('copied_count', { ascending: false }).limit(6);
+					query = query.order('copied_count', { ascending: false });
 				} else if (selectedFilter === 'Recent') {
-					query = query.order('created_at', { ascending: false }).limit(6);
+					query = query.order('created_at', { ascending: false });
 				}
 
-				// 4. Выполнение запроса
-				const { data, error } = await query;
+				// 3. Применяем диапазоны пагинации
+				query = query.range(from, to);
+
+				const { data, count, error } = await query;
 
 				if (error) {
 					console.error('Ошибка Supabase:', error);
 					return;
 				}
 
+				if (count !== null) {
+					setTotalCount(count); // Запоминаем количество
+				}
+
 				if (data) {
 					const formattedData = data.map(item => {
-						// Проверяем, есть ли среди всех лайков этого сниппета лайк от currentUserId
 						const hasStarred =
 							Array.isArray(item.snippets_stars) &&
 							item.snippets_stars.some(
@@ -172,6 +192,7 @@ export const ExploreHub = () => {
 		selectedTag,
 		currentTag,
 		selectedFilter,
+		currentPage, // 👈 Перезапрашиваем данные при смене страницы!
 	]);
 
 	const getFilterText = () => {
@@ -266,7 +287,7 @@ export const ExploreHub = () => {
 					</div>
 					<div className='flex items-center justify-between mt-4'>
 						<h2 className='text-2xl text-[#F8FAFC] font-bold'>
-							Count matching snippets
+							{totalCount} matching snippets
 						</h2>
 						<p className='text-[#64748B] font-mono font-semibold'>
 							Sorted by: {selectedFilter.toLocaleLowerCase()}
@@ -278,6 +299,59 @@ export const ExploreHub = () => {
 							onToggleStar={handleToggleStar}
 							activeSnippetCategory={selectedFilter}
 						/>
+						{/* 4. Оживляем UI Пагинации */}
+						{totalPages > 1 && (
+							<div className='mt-6 flex justify-start'>
+								<Pagination>
+									<PaginationContent>
+										<PaginationItem>
+											<PaginationPrevious
+												onClick={e => {
+													e.preventDefault();
+													if (currentPage > 1) setCurrentPage(prev => prev - 1);
+												}}
+												className={
+													currentPage === 1
+														? 'pointer-events-none opacity-40'
+														: ''
+												}
+											/>
+										</PaginationItem>
+
+										{Array.from({ length: totalPages }, (_, i) => i + 1).map(
+											page => (
+												<PaginationItem key={page}>
+													<PaginationLink
+														isActive={page === currentPage}
+														onClick={e => {
+															e.preventDefault();
+															setCurrentPage(page);
+														}}
+													>
+														{page}
+													</PaginationLink>
+												</PaginationItem>
+											),
+										)}
+
+										<PaginationItem>
+											<PaginationNext
+												onClick={e => {
+													e.preventDefault();
+													if (currentPage < totalPages)
+														setCurrentPage(prev => prev + 1);
+												}}
+												className={
+													currentPage === totalPages
+														? 'pointer-events-none opacity-40'
+														: ''
+												}
+											/>
+										</PaginationItem>
+									</PaginationContent>
+								</Pagination>
+							</div>
+						)}
 					</div>
 				</div>
 			</div>
