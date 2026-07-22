@@ -10,6 +10,7 @@ import { supabase } from '../utils/supabase';
 import { Button } from '../components/ui/Button';
 import { CodeBlock } from '../components/ui/CodeBlock';
 import type { dependencyT } from '../components/features/Showcase';
+import { SnippetPageSkeleton } from '../components/ui/Skeletons/SnippetPageSkeleton';
 
 interface snippetCard {
 	id: string;
@@ -355,6 +356,10 @@ export const Snippet = () => {
 			)}
 		</div>
 	);
+
+	if (loading || !snippet) {
+		return <SnippetPageSkeleton />;
+	}
 
 	return (
 		<div className='w-full py-6 px-10'>
