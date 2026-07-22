@@ -5,7 +5,6 @@ import { cn } from '../../utils/cn';
 import { FeaturCards } from './FeaturCards';
 import { Snippets } from './Snippets';
 import { supabase } from '../../utils/supabase';
-import { useSnippetStars } from '../../hooks/useSnippetStars';
 
 const categories = [
 	{
@@ -71,8 +70,6 @@ export const Showcase = () => {
 	const [snippetsCards, setSnippetsCards] = useState<snippetCard[] | null>(
 		null,
 	);
-
-	const { handleToggleStar } = useSnippetStars(setSnippetsCards);
 
 	const [active, setActive] = useState<number>(1);
 	const [activeSnippetCategory, setActiveSnippetCategory] =
@@ -198,7 +195,6 @@ export const Showcase = () => {
 					<Snippets
 						snippets={snippetsCards}
 						activeSnippetCategory={activeSnippetCategory}
-						onToggleStar={handleToggleStar}
 					/>
 				</div>
 			</div>

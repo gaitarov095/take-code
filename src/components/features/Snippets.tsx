@@ -11,6 +11,7 @@ import { SnippetSkeleton } from '../ui/Skeletons/SnippetSkeleton'; // <--- Им�
 
 import type { snippetCard } from './Showcase';
 import { supabase } from '../../utils/supabase';
+import { Link } from 'react-router-dom';
 
 const containerVariants = {
 	hidden: { opacity: 0 },
@@ -38,13 +39,11 @@ const cardVariants = {
 type SnippetsProps = {
 	snippets: snippetCard[] | null;
 	activeSnippetCategory: string;
-	onToggleStar: (snippetId: string, isStarred: boolean) => void;
 };
 
 export const Snippets = ({
 	snippets,
 	activeSnippetCategory,
-	onToggleStar,
 }: SnippetsProps) => {
 	const [copied, setCopied] = useState<string>('');
 
@@ -105,63 +104,62 @@ export const Snippets = ({
 						key={snippet.id}
 						variants={cardVariants}
 					>
-						<div>
-							<div className='flex items-center justify-between'>
-								<UserTag
-									user={snippet.profiles?.tag || '@takecode'}
-									avatar={
-										snippet.profiles?.avatar_url ||
-										'https://img.magnific.com/premium-vector/default-avatar-profile-icon-social-media-user-image-gray-avatar-icon-blank-profile-silhouette-vector-illustration_561158-3407.jpg?semt=ais_hybrid&w=740&q=80'
-									}
-								/>
-								<Language
+						<Link to={`/snippet/${snippet.id}`}>
+							<div>
+								<div className='flex items-center justify-between'>
+									<UserTag
+										user={snippet.profiles?.tag || '@takecode'}
+										avatar={
+											snippet.profiles?.avatar_url ||
+											'https://img.magnific.com/premium-vector/default-avatar-profile-icon-social-media-user-image-gray-avatar-icon-blank-profile-silhouette-vector-illustration_561158-3407.jpg?semt=ais_hybrid&w=740&q=80'
+										}
+									/>
+									<Language
+										language={snippet.languages?.name || 'plaintext'}
+										icon={snippet.languages?.icon}
+										background={snippet.languages?.background}
+										color={snippet.languages?.color}
+										borderColor={snippet.languages?.borderColor}
+									/>
+								</div>
+
+								<div className='mt-4'>
+									<h3 className='text-white font-bold text-2xl'>
+										{snippet.title}
+									</h3>
+									<p className='text-[#94A3B8] text-[16px] font-semibold mt-1'>
+										{snippet.description}
+									</p>
+								</div>
+							</div>
+
+							<div className='mt-3 w-full'>
+								<CodeInput
+									code={snippet.code}
 									language={snippet.languages?.name || 'plaintext'}
-									icon={snippet.languages?.icon}
-									background={snippet.languages?.background}
-									color={snippet.languages?.color}
-									borderColor={snippet.languages?.borderColor}
 								/>
 							</div>
 
-							<div className='mt-4'>
-								<h3 className='text-white font-bold text-2xl'>
-									{snippet.title}
-								</h3>
-								<p className='text-[#94A3B8] text-[16px] font-semibold mt-1'>
-									{snippet.description}
-								</p>
-							</div>
-						</div>
-
-						<div className='mt-3 w-full'>
-							<CodeInput
-								code={snippet.code}
-								language={snippet.languages?.name || 'plaintext'}
-							/>
-						</div>
-
-						<div className='mt-2 pt-2 flex items-center justify-between'>
-							<button
-								onClick={() =>
-									onToggleStar(snippet.id, !!snippet.is_starred_by_user)
-								}
-								className='flex items-center gap-1.5 text-[#cbd5e1] font-semibold hover:opacity-80 transition-opacity cursor-pointer'
-							>
-								<Star
-									className={
-										snippet.is_starred_by_user
-											? 'text-[#e3d07f] fill-[#e3d07f]' // Закрашиваем, если лайкнуто
-											: 'text-[#cbd5e1]'
-									}
-									size={20}
+							<div className='mt-2 pt-2 flex items-center justify-between'>
+								<div
+									className='flex items-center gap-1.5 text-[#cbd5e1] font-semibold'
+								>
+									<Star
+										className={
+											snippet.is_starred_by_user
+												? 'text-[#e3d07f] fill-[#e3d07f]' // Закрашиваем, если лайкнуто
+												: 'text-[#cbd5e1]'
+										}
+										size={20}
+									/>
+									<span>{snippet.stars_count}</span>
+								</div>
+								<Button
+									onClick={() => copyCode(snippet.id)}
+									copiedStatus={snippet.id === copied}
 								/>
-								<span>{snippet.stars_count}</span>
-							</button>
-							<Button
-								onClick={() => copyCode(snippet.id)}
-								copiedStatus={snippet.id === copied}
-							/>
-						</div>
+							</div>
+						</Link>
 					</motion.li>
 				))}
 			</motion.ul>

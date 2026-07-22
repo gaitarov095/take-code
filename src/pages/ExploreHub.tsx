@@ -19,7 +19,6 @@ import { SortDropdown } from '../components/features/SortDropDown';
 
 import type { snippetCard } from '../components/features/Showcase';
 import { Snippets } from '../components/features/Snippets';
-import { useSnippetStars } from '../hooks/useSnippetStars';
 
 
 export type languagesT = {
@@ -43,7 +42,6 @@ const sortingFiltersT = ['Trending', 'Most Copied', 'Recent'];
 
 export const ExploreHub = () => {
 	const [snippets, setSnippets] = useState<snippetCard[] | null>([]);
-	const { handleToggleStar } = useSnippetStars(setSnippets);
 
 	const [selectedLanguage, setSelectedLanguage] = useState<string>('');
 	const [selectedFramework, setSelectedFramework] = useState<string>('');
@@ -303,7 +301,6 @@ export const ExploreHub = () => {
 					<div className='mt-4'>
 						<Snippets
 							snippets={searchFilteredSnippets}
-							onToggleStar={handleToggleStar}
 							activeSnippetCategory={selectedFilter}
 						/>
 						{/* 4. Оживляем UI Пагинации */}
