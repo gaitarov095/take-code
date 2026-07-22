@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 import { useParams } from 'react-router-dom';
 
-import { Check, Copy, CornerDownRight, Star, Trash2, X } from 'lucide-react';
+import { Check, Copy, CornerDownRight, MessageSquareCode, Star, Trash2, X } from 'lucide-react';
 
 import { cn } from '../utils/cn';
 import { supabase } from '../utils/supabase';
@@ -294,7 +294,7 @@ export const Snippet = () => {
 	};
 
 	const formattedDate = snippet?.created_at
-		? new Date(snippet?.created_at).toDateString()
+		? new Date(snippet?.created_at).toLocaleDateString()
 		: '';
 
 	const rootComments = comments.filter(comment => !comment.parent_id);
@@ -508,27 +508,42 @@ export const Snippet = () => {
 				<div className='w-full mt-6 flex flex-col gap-6'>
 					{/* Список всех тредов */}
 					<div className='flex flex-col gap-4'>
-						{rootComments.map(parentComment => {
-							const childComments = comments.filter(
-								child => child.parent_id === parentComment.id,
-							);
-
-							return (
-								<div key={parentComment.id} className='flex flex-col gap-3'>
-									{/* Главный комментарий */}
-									{renderCommentCard(parentComment, false)}
-
-									{/* Вложенные ответы (со сдвигом влево/линией) */}
-									{childComments.length > 0 && (
-										<div className='ml-8 pl-4 border-l-2 border-[#212839] flex flex-col gap-3'>
-											{childComments.map(child =>
-												renderCommentCard(child, true),
-											)}
-										</div>
-									)}
+						{comments.length === 0 ? (
+							<div className='w-full py-12 px-6 bg-[#0e1424]/40 border border-[#212839]/60 rounded-3xl flex flex-col items-center justify-center text-center'>
+								<div className='p-3 bg-[#1e293b]/50 border border-[#2a364f] rounded-2xl mb-3 text-[#67e8f9]'>
+									<MessageSquareCode size={28} />
 								</div>
-							);
-						})}
+								<h4 className='text-lg font-bold text-white mb-1'>
+									No comments yet
+								</h4>
+								<p className='text-[#94A3B8] text-sm max-w-sm font-medium'>
+									Be the first to share feedback, edge cases, or optimizations
+									for this snippet!
+								</p>
+							</div>
+						) : (
+							rootComments.map(parentComment => {
+								const childComments = comments.filter(
+									child => child.parent_id === parentComment.id,
+								);
+
+								return (
+									<div key={parentComment.id} className='flex flex-col gap-3'>
+										{/* Главный комментарий */}
+										{renderCommentCard(parentComment, false)}
+
+										{/* Вложенные ответы (со сдвигом влево/линией) */}
+										{childComments.length > 0 && (
+											<div className='ml-8 pl-4 border-l-2 border-[#212839] flex flex-col gap-3'>
+												{childComments.map(child =>
+													renderCommentCard(child, true),
+												)}
+											</div>
+										)}
+									</div>
+								);
+							})
+						)}
 					</div>
 
 					{/* Индикатор того, что пользователь отвечает на конкретный комментарий */}
