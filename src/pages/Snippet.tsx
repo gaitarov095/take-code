@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 
 import { Check, Copy, CornerDownRight, MessageSquareCode, Star, Trash2, X } from 'lucide-react';
 
@@ -314,9 +314,11 @@ export const Snippet = () => {
 						src={comment?.profiles?.avatar_url}
 						alt='avatar'
 					/>
-					<span className='text-[#F8FAFC] font-bold'>
-						@{comment?.profiles?.tag}
-					</span>
+					<Link to={`/user/${comment?.user_id}`}>
+						<span className='text-[#a1abb8] transition-colors hover:text-[#F8FAFC] font-bold'>
+							@{comment?.profiles?.tag}
+						</span>
+					</Link>
 				</div>
 
 				<div className='flex items-center gap-3'>
@@ -374,7 +376,9 @@ export const Snippet = () => {
 									src={snippet?.profiles?.avatar_url}
 									alt='img'
 								/>
-								<span className='text-[#a1abb8] font-semibold text-[15px]'>{`@${snippet?.profiles?.tag} ${formattedDate}`}</span>
+								<Link to={`/user/${snippet?.user_id}`}>
+									<span className='text-[#a1abb8] font-semibold text-[15px] transition-colors hover:text-white'>{`@${snippet?.profiles?.tag} ${formattedDate}`}</span>
+								</Link>
 							</div>
 						</div>
 					</div>
