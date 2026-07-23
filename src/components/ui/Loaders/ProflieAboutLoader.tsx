@@ -8,11 +8,11 @@ export const ProflieAboutLoader = () => {
 					<div className='w-100 h-5 rounded-3xl bg-gray-400 animate-pulse mt-3'></div>
 				</div>
 			</div>
-			<div className='mt-2'>
+			<div className='mt-5'>
 				<div className='w-full h-5 rounded-3xl bg-gray-400 animate-pulse'></div>
 				<div className='w-2/3 h-5 rounded-3xl bg-gray-400 animate-pulse mt-4'></div>
 			</div>
-			<div className='flex items-center gap-3'>
+			<div className='flex items-center gap-3 mt-4'>
 				{[...Array(3)].map((_, index) => (
 					<div
 						key={index}
@@ -20,7 +20,7 @@ export const ProflieAboutLoader = () => {
 					></div>
 				))}
 			</div>
-			<div className='w-full flex gap-4 mt-2'>
+			<div className='w-full flex gap-4 mt-5'>
 				<div className='w-full bg-gray-400 animate-pulse rounded-2xl px-4 py-11'></div>
 				<div className='w-full bg-gray-400 animate-pulse rounded-2xl px-4 py-11'></div>
 			</div>
